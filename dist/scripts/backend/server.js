@@ -10,11 +10,11 @@ const path = require('path');
 const fs = require('fs');
 
 app.set('view engine', 'ejs')
-app.set('views',path.join(__dirname, '../views'))
+app.set('views',path.join(__dirname, '/views'))
 app.set('layout', 'layouts/layout')
 
 app.use(express.static(path.join(__dirname, '../../../')));
-app.set('views',path.join(__dirname, '../', '/views'))
+app.set('views',path.join(__dirname, '../../', '/views'))
 app.use(express.json())
 app.use(expressLayouts)
 
@@ -29,9 +29,11 @@ connection.once("open", function(res) {
 	connectedToDB = true
 }); 
 
+
 app.get('/', (req,res) => {
     res.render('home.ejs')
 })
+
 
 
 const port = process.env.PORT || 8080;
