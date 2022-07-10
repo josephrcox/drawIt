@@ -80,7 +80,7 @@ canvas {
 
 
 #currentScore {
-    background-color: gold;
+    background-color: #f00;
     border-radius: 30px;
     padding: 10px;
     position: absolute;
@@ -89,6 +89,7 @@ canvas {
     padding-bottom: 3px;
     padding-top: 3px;
     cursor: unset;
+    color: white;
   }
 
 

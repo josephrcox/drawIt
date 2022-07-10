@@ -53,6 +53,7 @@ app.get('/api/award/:user/:pts', async(req,res) => {
   let u = await User.findOne({name:req.params.user})
   u.points = parseInt(u.points) + parseInt(req.params.pts)
   await u.save()
+  res.json(u)
 })
 
 app.get('/api/awardall/:game/:pts', async(req,res) => {

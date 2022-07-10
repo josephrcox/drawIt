@@ -27,7 +27,7 @@ async function loadGames(u) {
 
     console.log(data)
     document.getElementById('currentScore').style.display = ''
-    document.getElementById('currentScore').innerText = data.points
+    document.getElementById('currentScore').innerText = "🪙 "+data.points
 
     if (window.location.pathname.includes('/game/')) {
         let gameid = window.location.pathname.split('/game/')[1]

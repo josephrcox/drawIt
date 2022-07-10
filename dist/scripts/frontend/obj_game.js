@@ -72,13 +72,12 @@ export const gameObject = {
                         init_canvas()
                         canvas.style.display = 'block'
                         info.innerHTML = "Draw <span style='font-weight:700;'>"+localStorage.draw_temp_chosenword+"</span>"
-
                     })
-                    newwords.addEventListener('click', function() {
+                    newwords.addEventListener('click', async function() {
                         
-                        if (parseInt(document.getElementById('currentScore')) >= 5) {
+                        if (parseInt(document.getElementById('currentScore').innerText) >= 5) {
                             localStorage.draw_temp_choices = null
-                            awardPoints(localStorage.draw_user, -5)
+                            await awardPoints(localStorage.draw_user, -5)
                             window.location.reload()
                         }
                     })
