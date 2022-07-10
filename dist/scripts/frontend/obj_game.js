@@ -12,6 +12,8 @@ export const gameObject = {
 
         let currentPlayerName = localStorage.draw_user
 
+        let containerwithx = document.createElement('div')
+
         let container = document.createElement('div')
         container.id = this.id
         container.classList.add('home_game')
@@ -21,15 +23,28 @@ export const gameObject = {
             container.innerHTML = this.player_names[0]+" vs <span style='font-weight:700;'>"+this.player_names[1]+"</span>"
         }    
         let touchEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
+        let deleteX = document.createElement('button')
+        deleteX.classList.add('deleteGameButton')
+        deleteX.innerHTML = "Delete"
+        deleteX.addEventListener(touchEvent, async function() {
+            const response = await fetch('/api/game/'+container.id+'/delete')
+            const data = await response.json() 
+            if (data.status == 'ok') {
+                containerwithx.innerHTML = ""
+            } else {
+                alert(data)
+            }
+        })
+        containerwithx.append(container, deleteX)
 
         if (this.player_names[this.whos_turn] == currentPlayerName) {
 
             container.addEventListener(touchEvent, function() {
                 window.location.href = '/game/'+container.id
             })
-            home_yourturn_list.append(container)
+            home_yourturn_list.append(containerwithx)
         } else {
-            home_waiting_list.append(container)
+            home_waiting_list.append(containerwithx)
         }
         
     },

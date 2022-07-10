@@ -10,7 +10,18 @@ function init_frontend() {
         localStorage.draw_user = u
     }
     localStorage.draw_user = localStorage.draw_user.toLowerCase()
-    loadGames(localStorage.draw_user)
+
+    var myRegEx  = /[^a-z\d]/i;
+    var isValid = !(myRegEx.test(localStorage.draw_user))
+
+    if (isValid) {
+        loadGames(localStorage.draw_user)
+    } else {
+        localStorage.clear()
+        window.location.reload()
+    }
+
+
 }
 
 init_frontend()
@@ -98,7 +109,12 @@ async function loadPlayerList() {
     let data = await (await response).json()
     data = data.data
     for (let i=0;i<data.length;i++) {
-        player_list.innerHTML += "<a href='#' class='playerbutton'>"+data[i][0]+"<span style='font-size:14px'> ( "+data[i][1]+" 🪙 )</span></a>"
+        if (localStorage.draw_user == data[i][0]) {
+            player_list.innerHTML += "<a href='#' class='playerbutton'>"+data[i][0]+"<span style='font-size:14px'> ( you )</span></a>"
+        } else {
+            player_list.innerHTML += "<a href='#' class='playerbutton'>"+data[i][0]+"<span style='font-size:14px'> ( "+data[i][1]+" 🪙 )</span></a>"
+        }
+        
         if (i != data.length-1) {
             player_list.innerHTML += " ~  "
         }
@@ -106,7 +122,7 @@ async function loadPlayerList() {
     let playerButtons = document.getElementsByClassName('playerbutton')
     for (let i=0;i<playerButtons.length;i++) {
         playerButtons[i].onclick = function() {
-            createNewGame(playerButtons[i].innerText)
+            createNewGame(playerButtons[i].innerText.split(" (")[0])
         }
     }
 }

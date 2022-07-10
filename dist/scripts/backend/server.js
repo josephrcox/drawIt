@@ -76,6 +76,7 @@ app.get('/api/awardall/:game/:pts', async(req,res) => {
 })
 
 app.get('/createuser/:user/', async(req,res) => {
+    
     let u = await User.create({
       name:req.params.user.toLowerCase()
     }) 
@@ -111,6 +112,7 @@ app.get('/creategame/:player1/:player2', async(req,res) => {
 
 app.get('/api/game/:game/changeturn', async(req,res) => {
   let g = await Game.findById(req.params.game)
+  g.total_turns = parseInt(g.total_turns) + 1
   switch (g.whos_turn) {
     case 0:
       g.whos_turn = 1
@@ -146,6 +148,12 @@ app.get('/api/get/game/:game/', async(req,res) => {
   let g = await Game.findById(req.params.game)
   res.json({data:g})
 })
+
+app.get('/api/game/:id/delete', async(req,res) => {
+    let g = await Game.findByIdAndDelete(req.params.id)
+    let g2 = await Game.findByIdAndDelete(req.params.id)
+    res.json({status:'ok', game:g2})
+})  
 
 
 

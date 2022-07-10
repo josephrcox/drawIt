@@ -119,3 +119,18 @@ a {
 #player_list > a {
     color: blue;
 }
+
+
+#home_yourturn_list > div {
+    display: flex;
+  }
+
+
+
+  .deleteGameButton {
+    border-radius: 23px;
+    font-size: 12px;
+    background-color: #000;
+    color: white;
+    margin-left: 5px;
+  }
