@@ -1,7 +1,7 @@
 
 .home_game {
     border: 1px solid black;
-    width: 100vw;
+    width: auto;
     padding: 15px;
     max-width: 300px;
     text-align: center;
@@ -123,6 +123,9 @@ a {
 
 #home_yourturn_list > div {
     display: flex;
+    justify-content: center;
+    align-content: center;
+    margin-bottom: 10px;
   }
 
 
