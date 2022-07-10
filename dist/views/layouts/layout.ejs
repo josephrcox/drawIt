@@ -7,9 +7,20 @@
     <title>DrawIt</title>
     <link rel="stylesheet" type="text/css" href="/dist/css/style.css" />
 </head>
-<body>
+<body>    
+    <div class="modal" id="modal">
+        Pick the next word!
+        <button></button>
+        <button></button>
+        <button></button>
+    </div>
     <div class='page-content'>
+        <span id="currentScore" style="display: none;"></span>
+        <div class="header">
+            <a href='/'>DrawIt</a>
+        </div>
         <%- body %>
     </div>
+    <script src="/dist/scripts/frontend/main.js" type="module"></script>
 </body>
 </html>

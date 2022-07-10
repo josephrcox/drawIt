@@ -1,3 +1,103 @@
-div {
-    background-color: cadetblue;
+
+.home_game {
+    border: 1px solid black;
+    width: 100vw;
+    padding: 15px;
+    max-width: 300px;
+    text-align: center;
+    font-size: 18px;
+    background-color: #e6f4fd;
+    border-radius: 25px;
+    cursor: pointer;
 }
+
+body {
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    background-color: #72caff;
+}
+
+image {
+    max-width: 80vw;
+    max-height: 250px;
+    object-fit: contain;
+}
+
+.header {
+    
+    font-size: 46px;
+    justify-content: space-around;
+    max-width: 80vw;
+    width: auto;
+    display: flex;
+    position: fixed;
+    top: 0;
+}
+
+.modal {
+    display: none;
+    width: 100vw;
+    height: 71vh;
+    position: fixed;
+    background-color: #ddf666;
+    top: 75px;
+    color: black;
+    border-radius: 30px;
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-width: 700px;
+    left: 50%;
+    transform: translate(-50%, 0);
+    font-size: 20px;
+}
+
+.modal >button, button {
+    all:unset;
+    cursor: pointer;
+    background-color: white;
+    margin-bottom: 3px;
+    margin-top: 3px;
+    padding: 8px;
+    border-radius: 10px;
+    border: 1px solid gray;
+}
+
+canvas {
+    box-shadow: 0 0 6px 0 #999;
+}
+
+.page-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 95vh;
+
+}
+
+
+#currentScore {
+    background-color: gold;
+    border-radius: 30px;
+    padding: 10px;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding-bottom: 3px;
+    padding-top: 3px;
+    cursor: unset;
+  }
+
+
+a {
+    all:unset;
+    cursor: pointer;
+}
+
+
+#image {
+    max-width: 100%;
+  }
