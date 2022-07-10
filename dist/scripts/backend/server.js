@@ -15,15 +15,13 @@ app.set('layout', 'layouts/layout')
 
 app.use(express.static(path.join(__dirname, '../../../')));
 app.set('views',path.join(__dirname, '../../', '/views'))
-app.use(express.json())
-app.use(expressLayouts)
 
-var bodyParser = require('body-parser')
-// create application/json parser
-var jsonParser = bodyParser.json()
- 
-// create application/x-www-form-urlencoded parser
-var urlencodedParser = bodyParser.urlencoded({ extended: false })
+app.use(expressLayouts)
+const bodyParser = require('body-parser')
+app.use(bodyParser.json({limit: '50mb', extended: true}));
+app.use(bodyParser.urlencoded({limit: "50mb", extended: true, parameterLimit:50000}));
+app.use(bodyParser.text({ limit: '200mb' }));
+app.use(express.json())
 
 const mongoose = require('mongoose')
 mongoose.connect(process.env.DATEBASE_URL, {
