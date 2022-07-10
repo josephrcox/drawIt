@@ -27,7 +27,7 @@ async function loadGames(u) {
 
     console.log(data)
     document.getElementById('currentScore').style.display = ''
-    document.getElementById('currentScore').innerText = "🪙 "+data.points
+    document.getElementById('currentScore').innerText = ""+data.points+" 🪙"
 
     if (window.location.pathname.includes('/game/')) {
         let gameid = window.location.pathname.split('/game/')[1]
@@ -67,11 +67,22 @@ async function loadGames(u) {
             }
         }
     }
-
+    loadPlayerList()
 }
 
-document.getElementById('createNewGame').onclick = async function() {
-    let vsplayer = prompt("New game with who?")
+document.getElementById('createNewGame').onclick = function() {
+    createNewGame()
+    
+}
+
+async function createNewGame(user) {
+    let vsplayer = ""
+    if (user == null || user == undefined) {
+        vsplayer = prompt("New game with who?")
+    } else {
+        vsplayer = user
+    }
+
     if (vsplayer.length >= 3 && vsplayer.toLowerCase() != localStorage.draw_user) {
         const response = await fetch('/creategame/'+localStorage.draw_user+'/'+vsplayer)
         const data = await response.json()
@@ -79,5 +90,23 @@ document.getElementById('createNewGame').onclick = async function() {
             window.location.reload()
         }
     } 
-    
+}
+
+async function loadPlayerList() {
+    const player_list = document.getElementById('player_list')
+    const response = await fetch('/api/get/playerlist')
+    let data = await (await response).json()
+    data = data.data
+    for (let i=0;i<data.length;i++) {
+        player_list.innerHTML += "<a href='#' class='playerbutton'>"+data[i][0]+"<span style='font-size:14px'> ( "+data[i][1]+" 🪙 )</span></a>"
+        if (i != data.length-1) {
+            player_list.innerHTML += " ~  "
+        }
+    }
+    let playerButtons = document.getElementsByClassName('playerbutton')
+    for (let i=0;i<playerButtons.length;i++) {
+        playerButtons[i].onclick = function() {
+            createNewGame(playerButtons[i].innerText)
+        }
+    }
 }

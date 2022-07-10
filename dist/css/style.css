@@ -16,6 +16,7 @@ body {
     display: flex;
     justify-content: center;
     background-color: #72caff;
+    font-family: 'Lora', serif;
 }
 
 image {
@@ -108,3 +109,13 @@ a {
     background-color: #410a0a;
     color: white;
   }
+
+  
+#player_list {
+    border-top: 1px solid gray;
+    width: 100%;
+  }
+
+#player_list > a {
+    color: blue;
+}

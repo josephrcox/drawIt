@@ -56,6 +56,15 @@ app.get('/api/award/:user/:pts', async(req,res) => {
   res.json(u)
 })
 
+app.get('/api/get/playerlist', async(req,res) => {
+  let users = await User.find({})
+  let list = []
+  for (let i=0;i<users.length;i++) {
+    list.push([users[i].name,users[i].points])
+  }
+  res.json({data:list})
+})
+
 app.get('/api/awardall/:game/:pts', async(req,res) => {
   let g = await Game.findById(req.params.game)
   for (let i=0;i<g.player_names.length;i++) {
