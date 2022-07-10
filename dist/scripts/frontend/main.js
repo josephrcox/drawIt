@@ -9,6 +9,7 @@ function init_frontend() {
         }
         localStorage.draw_user = u
     }
+    localStorage.draw_user = localStorage.draw_user.toLowerCase()
     loadGames(localStorage.draw_user)
 }
 
@@ -43,6 +44,9 @@ async function loadGames(u) {
             go.display()
         }
     } else {
+        if (data.current_game_ids == undefined) {
+            window.location.reload()
+        }
         for (let i=0;i<data.current_game_ids.length;i++) {
             let r = await fetch('/api/get/game/'+data.current_game_ids[i])
             let g = await r.json()

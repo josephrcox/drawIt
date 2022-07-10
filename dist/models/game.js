@@ -6,6 +6,7 @@ const gameSchema = new mongoose.Schema(
         player_ids:{type:Array, required:true},
         player_names:{type:Array, required:true},
         whos_turn:{type:Number, required:true, default:0},
+        total_turns:{type:Number, required:true, default:0}
     },
     { collection: 'games', timestamps:true}
 )

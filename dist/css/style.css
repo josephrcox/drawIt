@@ -101,3 +101,9 @@ a {
 #image {
     max-width: 100%;
   }
+
+  
+#newwords {
+    background-color: #410a0a;
+    color: white;
+  }

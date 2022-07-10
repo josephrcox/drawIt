@@ -55,9 +55,19 @@ app.get('/api/award/:user/:pts', async(req,res) => {
   await u.save()
 })
 
+app.get('/api/awardall/:game/:pts', async(req,res) => {
+  let g = await Game.findById(req.params.game)
+  for (let i=0;i<g.player_names.length;i++) {
+    let u = await User.findOne({name:g.player_names[i]})
+    u.points = parseInt(u.points) + parseInt(req.params.pts)
+    await u.save()
+  }
+  res.json({status:'ok'})
+})
+
 app.get('/createuser/:user/', async(req,res) => {
     let u = await User.create({
-      name:req.params.user
+      name:req.params.user.toLowerCase()
     }) 
     res.json({u})
 })
@@ -111,7 +121,6 @@ app.get('/api/game/:game/finishguessing', async(req,res) => {
 })
 
 app.post('/api/game/:game/updatelatest/', async(req,res) => {
-  console.log(req.body)
   let g = await Game.findById(req.params.game)
   g.latest = req.body.data
   await g.save()
@@ -119,7 +128,7 @@ app.post('/api/game/:game/updatelatest/', async(req,res) => {
 })
 
 app.get('/api/get/user/:user/', async(req,res) => {
-  let u = await User.findOne({name:req.params.user})
+  let u = await User.findOne({name:req.params.user.toLowerCase()})
   res.json({data:u})
 })
 

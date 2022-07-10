@@ -43,6 +43,7 @@ export const gameObject = {
             const image = document.getElementById("image")
             const guess = document.getElementById("guess")
             const canvas = document.getElementById('drawing-area')
+            const newwords = document.getElementById('newwords')
             
             canvas.dataset.gameid = this.id
     
@@ -50,11 +51,19 @@ export const gameObject = {
                 console.log(this.latest.length)
                 // no latest image, pick word state
                 let modal = document.getElementById('modal')
-                let choices = returnRandomWords()
+                let choices = []
+                if (localStorage.draw_temp_choices == null || localStorage.draw_temp_choices == "null") {
+                    choices = returnRandomWords()
+                    localStorage.draw_temp_choices = choices
+                } else {
+                    choices = localStorage.draw_temp_choices.replaceAll('[','').replaceAll(']','').split(',')
+                }
+
+                
                 modal.style.display = 'flex'
 
-                for (let i=0;i<modal.children.length;i++) {
-                    modal.children[i].innerHTML = choices[i] + " ("+(i+1)+" pts)"
+                for (let i=0;i<modal.children.length-1;i++) {
+                    modal.children[i].innerHTML = choices[i] + " ("+(i+1)+" coins)"
                     modal.children[i].addEventListener(touchEvent, function() {
                         // word chosen, close modal, and store locally to be used in the submit call
                         localStorage.setItem('draw_temp_chosenword', modal.children[i].innerHTML.split(' (')[0])
@@ -62,12 +71,22 @@ export const gameObject = {
                         modal.style.display = 'none'
                         init_canvas()
                         canvas.style.display = 'block'
+                        info.innerHTML = "Draw <span style='font-weight:700;'>"+localStorage.draw_temp_chosenword+"</span>"
 
+                    })
+                    newwords.addEventListener('click', function() {
+                        
+                        if (parseInt(document.getElementById('currentScore')) >= 5) {
+                            localStorage.draw_temp_choices = null
+                            awardPoints(localStorage.draw_user, -5)
+                            window.location.reload()
+                        }
                     })
                 }
                 
                 drawing_submit.style.display = ''
                 drawing_submit.addEventListener(touchEvent, async function() {
+                    localStorage.draw_temp_choices = null
                     var image = canvas.toDataURL("image/png")
                     let body = {
                         data:[
@@ -85,7 +104,8 @@ export const gameObject = {
                         method: 'POST',
                         body: JSON.stringify(body)
                     }); 
-                    changeTurn(canvas.dataset.gameid)
+                    await changeTurn(canvas.dataset.gameid)
+                    window.location.reload()
                 })
                 
                 // only change turn after finishing drawing
@@ -100,13 +120,13 @@ export const gameObject = {
                 image.src = this.latest[2]
                 image.dataset.gameID = this.id
                 info.innerHTML = 'Find the '+(image.dataset.value.length)+" letter word with these letters:<br/>"+scramble(image.dataset.value)
-                guess.addEventListener('keydown', function(e) {
+                guess.addEventListener('keydown', async function(e) {
                     if (e.key == "Enter" && guess.value.length > 0) {
                         if (guess.value.toLowerCase() == image.dataset.value.toLowerCase()) {
                             guess.setAttribute('placeholder', '')
-                            awardPoints(localStorage.draw_user, parseInt(image.dataset.points))
-                            finishGuessing(image.dataset.gameID)
-                            changeTurn(image.gameset.gameID)
+                            await awardPoints("", parseInt(image.dataset.points), image.dataset.gameID)
+                            await finishGuessing(image.dataset.gameID)
+                            window.location.reload()
                         } else {
                             guess.value = ""
                             guess.setAttribute('placeholder', 'Incorrect')
@@ -123,18 +143,22 @@ export const gameObject = {
     }
 }
 
-async function awardPoints(user, points) {
-    const response = await fetch('/api/award/'+user+"/"+points)
+async function awardPoints(user, points, game) {
+    if (user.length < 1) {
+        const response = await fetch('/api/awardall/'+game+"/"+points)
+    } else {
+        const response = await fetch('/api/award/'+user+"/"+points)
+    }
+
+    
 }
 
 async function changeTurn(gameID) {
     const response = await fetch('/api/game/'+gameID+'/changeturn' )
-    window.location.href = '/'
 }
 
 async function finishGuessing(gameID) {
     const response = await fetch('/api/game/'+gameID+'/finishguessing')
-    window.location.reload()
 }
 
 function returnRandomWords() {
