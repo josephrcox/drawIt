@@ -1,4 +1,4 @@
-import { gameObject } from "/dist/scripts/frontend/obj_game.js"
+import { gameObject, awardPoints } from "/dist/scripts/frontend/obj_game.js"
 
 function init_frontend() {
     console.info("loading frontend")
@@ -35,7 +35,7 @@ async function loadGames(u) {
         data = await r2.json()
         window.location.reload()
     }
-
+    dailyAward(localStorage.draw_user)
     console.log(data)
     document.getElementById('currentScore').style.display = ''
     document.getElementById('currentScore').innerText = ""+data.points+" 🪙"
@@ -124,5 +124,23 @@ async function loadPlayerList() {
         playerButtons[i].onclick = function() {
             createNewGame(playerButtons[i].innerText.split(" (")[0])
         }
+    }
+}
+
+async function dailyAward(u) {
+    let triggerReward = false
+    let now = Math.floor(new Date().getTime() / 1000)
+    let random = Math.floor(Math.random() * 15) + 5
+    if (localStorage.draw_lastplayed == null) {
+        localStorage.draw_lastplayed = Math.floor(new Date().getTime() / 1000)
+        triggerReward = true
+    } else if ((parseInt(now) - parseInt(localStorage.draw_lastplayed)) >= 86400) {
+        triggerReward = true
+    }
+
+    if (triggerReward) {
+        alert(`Today's daily reward is ${random} coins! Have fun!`)
+        await awardPoints(localStorage.draw_user, random)
+        window.location.reload()
     }
 }

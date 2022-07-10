@@ -53,6 +53,7 @@ export const gameObject = {
         let touchEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
         let drawing_submit = document.getElementById("drawing-submit")
         const info = document.getElementById('info')
+        const hint = document.getElementById('payforhint')
 
         if (this.player_names[this.whos_turn] == currentPlayerName) {
             const image = document.getElementById("image")
@@ -126,6 +127,7 @@ export const gameObject = {
                 // changeTurn(image.dataset.gameID)
             } else {
                 // guessing state
+                hint.style.display = ''
                 canvas.style.display = 'none'
                 image.style.display = ''
                 guess.style.display = ''
@@ -133,7 +135,7 @@ export const gameObject = {
                 image.dataset.points = this.latest[1]
                 image.src = this.latest[2]
                 image.dataset.gameID = this.id
-                info.innerHTML = 'Find the '+(image.dataset.value.length)+" letter word with these letters:<br/>"+scramble(image.dataset.value)
+                info.innerHTML = 'Find the '+(image.dataset.value.length)+" letter word"
                 guess.addEventListener('keydown', async function(e) {
                     if (e.key == "Enter" && guess.value.length > 0) {
                         if (guess.value.toLowerCase() == image.dataset.value.toLowerCase()) {
@@ -148,6 +150,13 @@ export const gameObject = {
                         }
                     }
                 })
+                hint.addEventListener(touchEvent, async function() {
+                    if (parseInt(document.getElementById('currentScore').innerText) >= 5) {
+                        await awardPoints(localStorage.draw_user, -10)
+                        info.innerHTML = 'Find the '+(image.dataset.value.length)+" letter word with these letters:<br/>"+scramble(image.dataset.value)
+                        hint.style.display = 'none'
+                    }
+                })
             }
         } else {
             window.location.href = '/'
@@ -157,7 +166,7 @@ export const gameObject = {
     }
 }
 
-async function awardPoints(user, points, game) {
+export async function awardPoints(user, points, game) {
     if (user.length < 1) {
         const response = await fetch('/api/awardall/'+game+"/"+points)
     } else {
