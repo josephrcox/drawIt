@@ -110,6 +110,9 @@ app.get('/creategame/:player1/:player2', async(req,res) => {
 
 app.get('/api/game/:game/changeturn', async(req,res) => {
   let g = await Game.findById(req.params.game)
+  if (g == null) {
+    res.redirect('/')
+  }
   g.total_turns = parseInt(g.total_turns) + 1
   switch (g.whos_turn) {
     case 0:
@@ -132,9 +135,15 @@ app.get('/api/game/:game/finishguessing', async(req,res) => {
 
 app.post('/api/game/:game/updatelatest/', async(req,res) => {
   let g = await Game.findById(req.params.game)
-  g.latest = req.body.data
-  await g.save()
-  res.json({data:g})
+  if (g == null) {
+    res.redirect('/')
+  } else {
+    g.latest = req.body.data
+  
+    await g.save()
+    res.json({data:g})
+  }
+
 })
 
 app.get('/api/get/user/:user/', async(req,res) => {
@@ -144,7 +153,12 @@ app.get('/api/get/user/:user/', async(req,res) => {
 
 app.get('/api/get/game/:game/', async(req,res) => {
   let g = await Game.findById(req.params.game)
-  res.json({data:g})
+  if (g == null) {
+    res.redirect('/')
+  } else {
+    res.json({data:g})
+  }
+
 })
 
 app.get('/api/game/:id/delete', async(req,res) => {
@@ -153,7 +167,9 @@ app.get('/api/game/:id/delete', async(req,res) => {
     res.json({status:'ok', game:g2})
 })  
 
-
+app.get("*", (req,res) => {
+    res.redirect('/')
+})
 
 const port = process.env.PORT || 8080;
 app.listen(port, () => {
