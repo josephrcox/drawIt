@@ -152,12 +152,8 @@ app.get('/api/get/user/:user/', async(req,res) => {
 })
 
 app.get('/api/get/game/:game/', async(req,res) => {
-  let g = await Game.findById(req.params.game)
-  if (g == null) {
-    res.redirect('/')
-  } else {
+    let g = await Game.findById(req.params.game)
     res.json({data:g})
-  }
 
 })
 
