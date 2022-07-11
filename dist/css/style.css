@@ -137,3 +137,16 @@ a {
     color: white;
     margin-left: 5px;
   }
+
+
+.drawingSettings {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.drawingSettings >div{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}

@@ -211,6 +211,8 @@ let fillStyle = '#333';
 let strokeStyle = '#333';
 let shadowColor = '#333';
 
+let drawingHistory = []
+
 function init_canvas() {
     canvas = document.getElementById('drawing-area');
     canvas.style.display = 'none'
@@ -248,10 +250,21 @@ function init_canvas() {
     clear.onclick = function() {
         clearCanvas()
     }
+    const undo = document.getElementById("drawing-undo")
+    undo.style.display = ''
+    undo.onclick = function() {
+        var image = new Image();
+        image.onload = function() {
+            canvasContext.drawImage(image, 0,0)
+        };
+        image.src = drawingHistory[drawingHistory.length - 1]
+        drawingHistory.splice(-1)
+    }
 }
 
 function handleWritingStart(event) {
   event.preventDefault();
+
 
   const mousePos = getMosuePositionOnCanvas(event);
   
@@ -266,6 +279,8 @@ function handleWritingStart(event) {
   canvasContext.fill();
   
   state.mousedown = true;
+  drawingHistory.push(canvas.toDataURL("image/png"))
+  console.log(drawingHistory)
 }
 
 function handleWritingInProgress(event) {
@@ -289,6 +304,7 @@ function handleDrawingEnd(event) {
   }
   
   state.mousedown = false;
+
 }
 
 function getMosuePositionOnCanvas(event) {
