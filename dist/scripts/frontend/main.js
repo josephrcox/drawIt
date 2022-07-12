@@ -140,6 +140,7 @@ async function dailyAward(u) {
 
     if (triggerReward) {
         alert(`Today's daily reward is ${random} coins! Have fun!`)
+        localStorage.draw_lastplayed = Math.floor(new Date().getTime() / 1000)
         await awardPoints(localStorage.draw_user, random)
         window.location.reload()
     }
