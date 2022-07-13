@@ -64,7 +64,6 @@ export const gameObject = {
             canvas.dataset.gameid = this.id
     
             if (this.latest.length != 3) {
-                console.log(this.latest.length)
                 // no latest image, pick word state
                 let modal = document.getElementById('modal')
                 let choices = []
@@ -221,6 +220,7 @@ function init_canvas() {
     canvasContext.canvas.width = window.innerWidth * 0.9
     canvasContext.canvas.height = window.innerHeight * 0.5
     canvasContext.fillStyle = "white"
+    canvasContext.lineCap = "round";
     canvasContext.fillRect(0, 0, canvas.width, canvas.height);
 
     
@@ -265,7 +265,6 @@ function init_canvas() {
 function handleWritingStart(event) {
   event.preventDefault();
 
-
   const mousePos = getMosuePositionOnCanvas(event);
   
   canvasContext.beginPath();
@@ -275,12 +274,12 @@ function handleWritingStart(event) {
   canvasContext.lineWidth = lineWidth;
   canvasContext.strokeStyle = strokeStyle;
   canvasContext.shadowColor = null;
+  canvasContext.arc(mousePos.x, mousePos.y, lineWidth/4, 3, 2 * Math.PI, false);
 
   canvasContext.fill();
   
   state.mousedown = true;
   drawingHistory.push(canvas.toDataURL("image/png"))
-  console.log(drawingHistory)
 }
 
 function handleWritingInProgress(event) {
@@ -296,6 +295,7 @@ function handleWritingInProgress(event) {
 
 function handleDrawingEnd(event) {
   event.preventDefault();
+  console.log("drawing end")
   
   if (state.mousedown) {
     canvasContext.shadowColor = shadowColor;
