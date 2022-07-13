@@ -32,8 +32,6 @@ image {
     max-width: 80vw;
     width: auto;
     display: flex;
-    position: fixed;
-    top: 0;
 }
 
 .modal {
