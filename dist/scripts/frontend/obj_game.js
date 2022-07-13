@@ -19,7 +19,7 @@ export const gameObject = {
         container.id = this.id
         container.classList.add('home_game')
         if (this.whos_turn == 0) {
-            container.innerHTML = "<span style='font-weight:700;'>"+this.player_names[0]+"</span> vs "+this.player_names[1]
+            container.innerHTML = "<span style='font-weight:700;'>"+this.player_names[0]+"</span> vs "+this.player_names[1] + " ("+this.total_turns+" moves)"
         } else {
             container.innerHTML = this.player_names[0]+" vs <span style='font-weight:700;'>"+this.player_names[1]+"</span> ("+this.total_turns+" moves)"
         }    
