@@ -153,6 +153,23 @@ app.get('/api/get/user/:user/', async(req,res) => {
 
 app.get('/api/get/game/:game/', async(req,res) => {
     let g = await Game.findById(req.params.game)
+    if (g == null) {
+      let u = User.find({}, async function(err,docs) {
+        for (let i=0;i<docs.length;i++) {
+          if (err || docs[i] == null) {
+            console.log(err, docs[i])
+          } else {
+            var index = docs[i].current_game_ids.indexOf(req.params.game);
+            if (index !== -1) {
+              docs[i].current_game_ids.splice(index, 1);
+            }
+            await docs[i].save()
+          }
+        }
+        
+
+      })
+    }
     res.json({data:g})
 
 })
@@ -166,6 +183,49 @@ app.get('/api/game/:id/delete', async(req,res) => {
 app.get("*", (req,res) => {
     res.redirect('/')
 })
+
+const testingAccountName = "test1234"
+
+async function cleanUp() {
+  User.find({}, async function(err,u) {
+    for (let i=0;i<u.length;i++) {
+      if (u[i].name.includes(testingAccountName)) {
+        for (let g=0;g<u[i].current_game_ids.length;g++) {
+          let newarray = []
+          await Game.findByIdAndDelete(u[i].current_game_ids[g])
+          console.log("Game deleted: "+u[i].current_game_ids[g])
+        }
+        await User.findByIdAndDelete(u[i].id)
+      } else {
+        let newarray = []
+        for (let g=0;g<u[i].current_game_ids.length;g++) {
+          let g = await Game.findById(u[i].current_game_ids[i])
+          let p1 = await User.findById(g.player_ids[0])
+          let p2 = await User.findById(g.player_ids[1])
+          if (g != null && p1 != null && p2 != null && !p1.name.includes(testingAccountName) && !p2.name.includes(testingAccountName)) {
+            newarray.push(g.id)
+          }
+
+        }
+        u[i].current_game_ids = newarray
+      }
+    }
+  })
+  let g = await Game.find()
+  for (let i=0;i<g.length;i++) {
+    let cg = g[i]
+    let p1 = await User.findById(cg.player_ids[0])
+    let p2 = await User.findById(cg.player_ids[1])
+
+    if (p1 == null || p2 == null) {
+      await Game.findByIdAndDelete(cg.id)
+      console.log("Game deleted: "+cg.id)
+    }
+  }
+  
+}
+
+cleanUp()
 
 const port = process.env.PORT || 8080;
 app.listen(port, () => {

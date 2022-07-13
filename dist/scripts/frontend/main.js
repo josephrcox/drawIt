@@ -52,7 +52,7 @@ async function loadGames(u) {
             go.latest = g.data.latest
             go.whos_turn = g.data.whos_turn
             go.player_names = g.data.player_names
-            go.total_turns = g.data.total_turns
+            go.total_turns = Math.floor(parseInt(g.data.total_turns)/2)
             go.display()
         }
     } else {
@@ -70,7 +70,7 @@ async function loadGames(u) {
                 go.latest = g.data.latest
                 go.whos_turn = g.data.whos_turn
                 go.player_names = g.data.player_names
-                go.total_turns = g.data.total_turns
+                go.total_turns = Math.floor(parseInt(g.data.total_turns)/2)
                 if (window.location.pathname.includes('/game/')) {
                     console.log("game")
                     go.display()
