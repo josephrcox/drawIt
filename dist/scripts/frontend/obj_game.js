@@ -5,6 +5,7 @@ export const gameObject = {
     player_names:[],
     whos_turn:-1,
     id:"",
+    total_turns:-1,
 
     list() {
         const home_yourturn_list = document.getElementById('home_yourturn_list')
@@ -20,7 +21,7 @@ export const gameObject = {
         if (this.whos_turn == 0) {
             container.innerHTML = "<span style='font-weight:700;'>"+this.player_names[0]+"</span> vs "+this.player_names[1]
         } else {
-            container.innerHTML = this.player_names[0]+" vs <span style='font-weight:700;'>"+this.player_names[1]+"</span>"
+            container.innerHTML = this.player_names[0]+" vs <span style='font-weight:700;'>"+this.player_names[1]+"</span> ("+this.total_turns+" moves)"
         }    
         let touchEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
         let deleteX = document.createElement('button')

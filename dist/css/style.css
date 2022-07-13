@@ -119,7 +119,7 @@ a {
 }
 
 
-#home_yourturn_list > div {
+#home_yourturn_list > div, #home_waiting_list > div {
     display: flex;
     justify-content: center;
     align-content: center;
