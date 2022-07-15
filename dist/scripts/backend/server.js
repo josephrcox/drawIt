@@ -200,6 +200,7 @@ async function cleanUp() {
         let newarray = []
         for (let g=0;g<u[i].current_game_ids.length;g++) {
           let g = await Game.findById(u[i].current_game_ids[i])
+console.log(g)
           let p1 = await User.findById(g.player_ids[0])
           let p2 = await User.findById(g.player_ids[1])
           if (g != null && p1 != null && p2 != null && !p1.name.includes(testingAccountName) && !p2.name.includes(testingAccountName)) {
