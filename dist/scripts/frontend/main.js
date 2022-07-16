@@ -52,6 +52,7 @@ async function loadGames(u) {
             go.latest = g.data.latest
             go.whos_turn = g.data.whos_turn
             go.player_names = g.data.player_names
+            go.total_turns = Math.floor(parseInt(g.data.total_turns)/2)
             go.display()
         }
     } else {
@@ -69,6 +70,7 @@ async function loadGames(u) {
                 go.latest = g.data.latest
                 go.whos_turn = g.data.whos_turn
                 go.player_names = g.data.player_names
+                go.total_turns = Math.floor(parseInt(g.data.total_turns)/2)
                 if (window.location.pathname.includes('/game/')) {
                     console.log("game")
                     go.display()
@@ -98,7 +100,7 @@ async function createNewGame(user) {
         const response = await fetch('/creategame/'+localStorage.draw_user+'/'+vsplayer)
         const data = await response.json()
         if (data != null) {
-            window.location.reload()
+            window.location.href = '/game/'+data.g._id
         }
     } 
 }
@@ -140,6 +142,7 @@ async function dailyAward(u) {
 
     if (triggerReward) {
         alert(`Today's daily reward is ${random} coins! Have fun!`)
+        localStorage.draw_lastplayed = Math.floor(new Date().getTime() / 1000)
         await awardPoints(localStorage.draw_user, random)
         window.location.reload()
     }

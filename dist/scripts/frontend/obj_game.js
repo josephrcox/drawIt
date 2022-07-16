@@ -5,8 +5,10 @@ export const gameObject = {
     player_names:[],
     whos_turn:-1,
     id:"",
+    total_turns:-1,
 
     list() {
+localStorage.draw_submitvalidate = "false"
         const home_yourturn_list = document.getElementById('home_yourturn_list')
         const home_waiting_list = document.getElementById('home_waiting_list')
 
@@ -18,9 +20,9 @@ export const gameObject = {
         container.id = this.id
         container.classList.add('home_game')
         if (this.whos_turn == 0) {
-            container.innerHTML = "<span style='font-weight:700;'>"+this.player_names[0]+"</span> vs "+this.player_names[1]
+            container.innerHTML = "<span style='font-weight:700;'>"+this.player_names[0]+"</span> vs "+this.player_names[1] + " ("+this.total_turns+" moves)"
         } else {
-            container.innerHTML = this.player_names[0]+" vs <span style='font-weight:700;'>"+this.player_names[1]+"</span>"
+            container.innerHTML = this.player_names[0]+" vs <span style='font-weight:700;'>"+this.player_names[1]+"</span> ("+this.total_turns+" moves)"
         }    
         let touchEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
         let deleteX = document.createElement('button')
@@ -49,6 +51,7 @@ export const gameObject = {
         
     },
     display() {
+localStorage.draw_submitvalidate = "false"
         let currentPlayerName = localStorage.draw_user
         let touchEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
         let drawing_submit = document.getElementById("drawing-submit")
@@ -64,7 +67,6 @@ export const gameObject = {
             canvas.dataset.gameid = this.id
     
             if (this.latest.length != 3) {
-                console.log(this.latest.length)
                 // no latest image, pick word state
                 let modal = document.getElementById('modal')
                 let choices = []
@@ -101,7 +103,8 @@ export const gameObject = {
                 
                 drawing_submit.style.display = ''
                 drawing_submit.addEventListener(touchEvent, async function() {
-                    localStorage.draw_temp_choices = null
+if (localStorage.draw_submitvalidate == "true") {
+localStorage.draw_temp_choices = null
                     var image = canvas.toDataURL("image/png")
                     let body = {
                         data:[
@@ -120,7 +123,13 @@ export const gameObject = {
                         body: JSON.stringify(body)
                     }); 
                     await changeTurn(canvas.dataset.gameid)
+localStorage.draw_submitvalidate = "false"
                     window.location.reload()
+} else {
+drawing_submit.innerHTML = "Are you sure?"
+localStorage.draw_submitvalidate = "true"
+}
+                    
                 })
                 
                 // only change turn after finishing drawing
@@ -221,6 +230,7 @@ function init_canvas() {
     canvasContext.canvas.width = window.innerWidth * 0.9
     canvasContext.canvas.height = window.innerHeight * 0.5
     canvasContext.fillStyle = "white"
+    canvasContext.lineCap = "round";
     canvasContext.fillRect(0, 0, canvas.width, canvas.height);
 
     
@@ -265,7 +275,6 @@ function init_canvas() {
 function handleWritingStart(event) {
   event.preventDefault();
 
-
   const mousePos = getMosuePositionOnCanvas(event);
   
   canvasContext.beginPath();
@@ -275,12 +284,12 @@ function handleWritingStart(event) {
   canvasContext.lineWidth = lineWidth;
   canvasContext.strokeStyle = strokeStyle;
   canvasContext.shadowColor = null;
+  canvasContext.arc(mousePos.x, mousePos.y, lineWidth/4, 3, 2 * Math.PI, false);
 
   canvasContext.fill();
   
   state.mousedown = true;
   drawingHistory.push(canvas.toDataURL("image/png"))
-  console.log(drawingHistory)
 }
 
 function handleWritingInProgress(event) {
@@ -296,6 +305,7 @@ function handleWritingInProgress(event) {
 
 function handleDrawingEnd(event) {
   event.preventDefault();
+  console.log("drawing end")
   
   if (state.mousedown) {
     canvasContext.shadowColor = shadowColor;
