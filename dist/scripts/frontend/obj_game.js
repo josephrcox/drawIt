@@ -101,7 +101,8 @@ export const gameObject = {
                 
                 drawing_submit.style.display = ''
                 drawing_submit.addEventListener(touchEvent, async function() {
-                    localStorage.draw_temp_choices = null
+if (localStorage.draw_submitvalidate == "true") {
+localStorage.draw_temp_choices = null
                     var image = canvas.toDataURL("image/png")
                     let body = {
                         data:[
@@ -120,7 +121,13 @@ export const gameObject = {
                         body: JSON.stringify(body)
                     }); 
                     await changeTurn(canvas.dataset.gameid)
+localStorage.draw_submitvalidate = "false"
                     window.location.reload()
+} else {
+drawing_submit.innerHTML = "Are you sure?"
+localStorage.draw_submitvalidate = "true"
+}
+                    
                 })
                 
                 // only change turn after finishing drawing
