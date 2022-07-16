@@ -90,7 +90,6 @@ document.getElementById('createNewGame').onclick = function() {
 
 async function createNewGame(user) {
     let vsplayer = ""
-    navigator.vibrate(1000)
     if (user == null || user == undefined) {
         vsplayer = prompt("New game with who?")
     } else {
