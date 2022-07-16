@@ -90,6 +90,7 @@ document.getElementById('createNewGame').onclick = function() {
 
 async function createNewGame(user) {
     let vsplayer = ""
+    navigator.vibrate(1000)
     if (user == null || user == undefined) {
         vsplayer = prompt("New game with who?")
     } else {
@@ -146,11 +147,4 @@ async function dailyAward(u) {
         await awardPoints(localStorage.draw_user, random)
         window.location.reload()
     }
-}
-
-let buttons = document.querySelectorAll('button')
-for (let i=0;i<buttons.length;i++) {
-    buttons[i].addEventListener('click', function() {
-        navigator.vibrate(200)
-    })
 }
