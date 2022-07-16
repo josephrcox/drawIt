@@ -96,8 +96,8 @@ app.get('/creategame/:player1/:player2', async(req,res) => {
       p1.id, p2.id
     ],
     player_names:[
-      req.params.player1,
-      req.params.player2
+      req.params.player1.toLowerCase(),
+      req.params.player2.toLowerCase()
     ]
   }) 
   p1.current_game_ids.push(g.id)
