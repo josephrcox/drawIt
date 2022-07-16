@@ -29,6 +29,7 @@ localStorage.draw_submitvalidate = "false"
         deleteX.classList.add('deleteGameButton')
         deleteX.innerHTML = "Delete"
         deleteX.addEventListener(touchEvent, async function() {
+            navigator.vibrate(200)
             const response = await fetch('/api/game/'+container.id+'/delete')
             const data = await response.json() 
             if (data.status == 'ok') {
@@ -42,6 +43,7 @@ localStorage.draw_submitvalidate = "false"
         if (this.player_names[this.whos_turn] == currentPlayerName) {
 
             container.addEventListener(touchEvent, function() {
+                navigator.vibrate(100)
                 window.location.href = '/game/'+container.id
             })
             home_yourturn_list.append(containerwithx)
@@ -51,7 +53,7 @@ localStorage.draw_submitvalidate = "false"
         
     },
     display() {
-localStorage.draw_submitvalidate = "false"
+        localStorage.draw_submitvalidate = "false"
         let currentPlayerName = localStorage.draw_user
         let touchEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
         let drawing_submit = document.getElementById("drawing-submit")
@@ -83,6 +85,7 @@ localStorage.draw_submitvalidate = "false"
                 for (let i=0;i<modal.children.length-1;i++) {
                     modal.children[i].innerHTML = choices[i] + " ("+(i+1)+" coins)"
                     modal.children[i].addEventListener(touchEvent, function() {
+                        navigator.vibrate(50)
                         // word chosen, close modal, and store locally to be used in the submit call
                         localStorage.setItem('draw_temp_chosenword', modal.children[i].innerHTML.split(' (')[0])
                         localStorage.setItem('draw_temp_points', i+1)
@@ -103,32 +106,33 @@ localStorage.draw_submitvalidate = "false"
                 
                 drawing_submit.style.display = ''
                 drawing_submit.addEventListener(touchEvent, async function() {
-if (localStorage.draw_submitvalidate == "true") {
-localStorage.draw_temp_choices = null
-                    var image = canvas.toDataURL("image/png")
-                    let body = {
-                        data:[
-                            localStorage.draw_temp_chosenword, 
-                            localStorage.draw_temp_points,
-                            image
-                        ]
-                    }
-                    
-                    const fetchResponse = await fetch('/api/game/'+canvas.dataset.gameid+'/updatelatest', {
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
-                            },
-                        method: 'POST',
-                        body: JSON.stringify(body)
-                    }); 
-                    await changeTurn(canvas.dataset.gameid)
-localStorage.draw_submitvalidate = "false"
-                    window.location.reload()
-} else {
-drawing_submit.innerHTML = "Are you sure?"
-localStorage.draw_submitvalidate = "true"
-}
+                    navigator.vibrate(800)
+                    if (localStorage.draw_submitvalidate == "true") {
+                    localStorage.draw_temp_choices = null
+                        var image = canvas.toDataURL("image/png")
+                        let body = {
+                            data:[
+                                localStorage.draw_temp_chosenword, 
+                                localStorage.draw_temp_points,
+                                image
+                            ]
+                        }
+                        
+                        const fetchResponse = await fetch('/api/game/'+canvas.dataset.gameid+'/updatelatest', {
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                                },
+                            method: 'POST',
+                            body: JSON.stringify(body)
+                        }); 
+                        await changeTurn(canvas.dataset.gameid)
+                        localStorage.draw_submitvalidate = "false"
+                        window.location.reload()
+                } else {
+                drawing_submit.innerHTML = "Are you sure?"
+                localStorage.draw_submitvalidate = "true"
+                }
                     
                 })
                 
