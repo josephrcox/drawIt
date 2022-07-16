@@ -8,6 +8,7 @@ export const gameObject = {
     total_turns:-1,
 
     list() {
+localStorage.draw_submitvalidate = "false"
         const home_yourturn_list = document.getElementById('home_yourturn_list')
         const home_waiting_list = document.getElementById('home_waiting_list')
 
@@ -50,6 +51,7 @@ export const gameObject = {
         
     },
     display() {
+localStorage.draw_submitvalidate = "false"
         let currentPlayerName = localStorage.draw_user
         let touchEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
         let drawing_submit = document.getElementById("drawing-submit")
