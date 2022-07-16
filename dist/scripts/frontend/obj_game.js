@@ -8,7 +8,7 @@ export const gameObject = {
     total_turns:-1,
 
     list() {
-localStorage.draw_submitvalidate = "false"
+        localStorage.draw_submitvalidate = "false"
         const home_yourturn_list = document.getElementById('home_yourturn_list')
         const home_waiting_list = document.getElementById('home_waiting_list')
 
@@ -29,7 +29,6 @@ localStorage.draw_submitvalidate = "false"
         deleteX.classList.add('deleteGameButton')
         deleteX.innerHTML = "Delete"
         deleteX.addEventListener(touchEvent, async function() {
-            navigator.vibrate(200)
             const response = await fetch('/api/game/'+container.id+'/delete')
             const data = await response.json() 
             if (data.status == 'ok') {
@@ -43,7 +42,6 @@ localStorage.draw_submitvalidate = "false"
         if (this.player_names[this.whos_turn] == currentPlayerName) {
 
             container.addEventListener(touchEvent, function() {
-                navigator.vibrate(100)
                 window.location.href = '/game/'+container.id
             })
             home_yourturn_list.append(containerwithx)
@@ -85,7 +83,6 @@ localStorage.draw_submitvalidate = "false"
                 for (let i=0;i<modal.children.length-1;i++) {
                     modal.children[i].innerHTML = choices[i] + " ("+(i+1)+" coins)"
                     modal.children[i].addEventListener(touchEvent, function() {
-                        navigator.vibrate(50)
                         // word chosen, close modal, and store locally to be used in the submit call
                         localStorage.setItem('draw_temp_chosenword', modal.children[i].innerHTML.split(' (')[0])
                         localStorage.setItem('draw_temp_points', i+1)
@@ -106,7 +103,6 @@ localStorage.draw_submitvalidate = "false"
                 
                 drawing_submit.style.display = ''
                 drawing_submit.addEventListener(touchEvent, async function() {
-                    navigator.vibrate(800)
                     if (localStorage.draw_submitvalidate == "true") {
                     localStorage.draw_temp_choices = null
                         var image = canvas.toDataURL("image/png")
