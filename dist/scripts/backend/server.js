@@ -130,7 +130,7 @@ app.get('/api/game/:game/changeturn', async(req,res) => {
   res.json(g)
 })
 
-app.get('/api/game/:game/finishguessing/:attempts/:paidforhint', async(req,res) => {
+app.get('/api/game/:game/finishguessing/:attempts/:paidforhint/:superhint', async(req,res) => {
   let g = await Game.findById(req.params.game)
   if (g.history == null) {
     g.history = []
@@ -152,7 +152,8 @@ app.get('/api/game/:game/finishguessing/:attempts/:paidforhint', async(req,res) 
     img_data:g.latest[2],
     attempts:attempts,
     drawn_by:drawn_by,
-    paid_for_hint:req.params.paid
+    paid_for_hint:req.params.paid,
+    superhint_letters:parseInt(req.params.superhint)
   })
   g.latest = []
   await g.save()
@@ -274,7 +275,7 @@ async function cleanUp() {
   
 }
 
-cleanUp() 
+//cleanUp() 
 
  
 const port = process.env.PORT || 8080;

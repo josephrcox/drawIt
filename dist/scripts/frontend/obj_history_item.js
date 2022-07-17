@@ -6,6 +6,7 @@ export const historyItemObject = {
     comments:[],
     drawn_by:"",
     index:-1,
+    superhint_letters:-1,
 
     display() {
         const container = document.createElement("div")
@@ -16,10 +17,15 @@ export const historyItemObject = {
         if (this.paid_for_hint == "true" || this.paid_for_hint == true) {
             container.innerHTML += "<span style='font-style:italic;'>They paid for a hint</span><br/>"
         }
+        if (this.superhint_letters >= 0) {
+            container.innerHTML += "<span style='font-style:italic;'>They used a superhint</span><br/>"
+        }
+        
         container.innerHTML += "<img src='"+this.img_data+"'>"
         container.innerHTML += "<br/>Comments<br/>"
         const commentContainer = document.createElement("div")
         for (let i=0;i<this.comments.length;i++) {
+        
             let c = this.comments[i]
             commentContainer.innerHTML += "<span style='font-weight:700;'>" +c.split(': ')[0] + "</span>: "+c.split(': ')[1] + "<br/>"
         }
@@ -44,3 +50,4 @@ export const historyItemObject = {
 async function comment(index, comment) {
     const response = await fetch('/api/historyComment/'+window.location.pathname.split('/history/')[1]+"/"+index+"/"+localStorage.draw_user+"/"+comment)
 }
+

@@ -8,7 +8,8 @@ const historicalItems = new mongoose.Schema(
         attempts:{type:Array, required:true, default:[]},
         comments:{type:Array, required:true, default:[]},
         drawn_by:{type:String, required:true},
-        paid_for_hint:{type:Boolean, required:false}
+        paid_for_hint:{type:Boolean, required:false},
+        superhint_letters:{type:Number, required:false},
     }, {timestamps:true}
 )
 

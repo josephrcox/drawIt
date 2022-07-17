@@ -31,7 +31,9 @@ export const gameObject = {
         let deleteX = document.createElement('button')
         deleteX.classList.add('deleteGameButton')
         deleteX.innerHTML = "Delete"
+        
         deleteX.addEventListener(touchEvent, async function() {
+            // delete game
             let areyousurestring = "Are you sure?"
             if (deleteX.innerHTML == areyousurestring) {
                 const response = await fetch('/api/game/'+container.id+'/delete')
@@ -46,6 +48,7 @@ export const gameObject = {
             }
 
         })
+        
         let game_history = document.createElement('button')
         game_history.classList.add('gameHistoryButton')
         game_history.innerHTML = "History"
@@ -70,12 +73,14 @@ export const gameObject = {
         
     },
     display() {
+
         localStorage.draw_submitvalidate = "false"
         let currentPlayerName = localStorage.draw_user
         let touchEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
         let drawing_submit = document.getElementById("drawing-submit")
         const info = document.getElementById('info')
         const hint = document.getElementById('payforhint')
+        const superhint = document.getElementById('superhint')
 
         if (this.player_names[this.whos_turn] == currentPlayerName) {
             const image = document.getElementById("image")
@@ -83,10 +88,12 @@ export const gameObject = {
             const canvas = document.getElementById('drawing-area')
             const newwords = document.getElementById('newwords')
             
+            
             canvas.dataset.gameid = this.id
     
+            // NO WORD - DISPLAY NEW WORDS
             if (this.latest.length != 3) {
-                // no latest image, pick word state
+
                 let modal = document.getElementById('modal')
                 let choices = []
                 if (localStorage.draw_temp_choices == null || localStorage.draw_temp_choices == "null") {
@@ -164,13 +171,15 @@ export const gameObject = {
                 image.dataset.points = this.latest[1]
                 image.src = this.latest[2]
                 image.dataset.gameID = this.id
+                let superhint_letters = 0
                 info.innerHTML = 'Find the '+(image.dataset.value.length)+" letter word"
+                // User is guessing the word
                 guess.addEventListener('keydown', async function(e) {
                     if (e.key == "Enter" && guess.value.length > 0) {
                         if (guess.value.toLowerCase() == image.dataset.value.toLowerCase()) {
                             guess.setAttribute('placeholder', '')
                             await awardPoints("", parseInt(image.dataset.points), image.dataset.gameID)
-                            await finishGuessing(image.dataset.gameID, attempts)
+                            await finishGuessing(image.dataset.gameID, attempts, superhint_letters)
                             window.location.reload()
                         } else {
                             attempts.push(guess.value)
@@ -180,12 +189,28 @@ export const gameObject = {
                         }
                     }
                 })
+                // User wants a hint
                 hint.addEventListener(touchEvent, async function() {
                     if (parseInt(document.getElementById('currentScore').innerText) >= 5) {
                         await awardPoints(localStorage.draw_user, -10)
                         info.innerHTML = 'Find the '+(image.dataset.value.length)+" letter word with these letters:<br/>"+scramble(image.dataset.value)
                         hint.style.display = 'none'
+                        superhint.style.display = ''
+                        document.getElementById('currentScore').innerText = ""+(parseInt(document.getElementById('currentScore').innerText)-10)+" 🪙"
                     }
+                })
+                
+                superhint.addEventListener(touchEvent, async function() {
+                    if ((guess.value.length != image.dataset.value.length) && parseInt(document.getElementById('currentScore').innerText) >= 5) {
+                        superhint_letters++
+                        guess.value = ""
+                        await awardPoints(localStorage.draw_user, -5)
+                        document.getElementById('currentScore').innerText = ""+(parseInt(document.getElementById('currentScore').innerText)-5)+" 🪙"
+                        for (let i=0;i<superhint_letters;i++) {
+                            guess.value += image.dataset.value[i]
+                        }
+                    }
+
                 })
             }
         } else {
@@ -203,6 +228,7 @@ export async function awardPoints(user, points, game) {
         const response = await fetch('/api/award/'+user+"/"+points)
     }
 
+
     
 }
 
@@ -210,7 +236,7 @@ async function changeTurn(gameID) {
     const response = await fetch('/api/game/'+gameID+'/changeturn' )
 }
 
-async function finishGuessing(gameID, attempts) {
+async function finishGuessing(gameID, attempts, superhint) {
     if (attempts == "") {
         attempts = "none"
     } 
@@ -218,7 +244,7 @@ async function finishGuessing(gameID, attempts) {
     if (document.getElementById('payforhint').style.display == "none") {
         paid = true
     }
-    const response = await fetch('/api/game/'+gameID+'/finishguessing/'+attempts+"/"+paid)
+    const response = await fetch('/api/game/'+gameID+'/finishguessing/'+attempts+"/"+paid+"/"+superhint)
     
 }
 

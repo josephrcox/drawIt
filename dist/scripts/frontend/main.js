@@ -1,6 +1,10 @@
 import { gameObject, awardPoints } from "/dist/scripts/frontend/obj_game.js"
 import { historyItemObject } from "/dist/scripts/frontend/obj_history_item.js"
 
+function sendAnalyticalData(event_name, event_data) {
+    gtag('event', event_name, event_data)
+}
+
 function init_frontend() {
     console.info("loading frontend")
     if (localStorage.draw_user == null) {
@@ -35,20 +39,25 @@ async function loadGames(u) {
         const r2 = await fetch('/createuser/'+localStorage.draw_user)
         data = await r2.json()
         window.location.reload()
+        sendAnalyticalData('create_user', {'user': localStorage.draw_user})
     }
     dailyAward(localStorage.draw_user)
-    console.log(data)
     document.getElementById('currentScore').style.display = ''
     document.getElementById('currentScore').innerText = ""+data.points+" 🪙"
 
+    gtag('set', 'user_properties', {
+        username: localStorage.draw_user,
+        coins: data.points,
+        total_games: data.current_game_ids.length
+    });
+
     if (window.location.pathname.includes('/game/')) {
+        sendAnalyticalData('view_game', {'user': localStorage.draw_user})
         let gameid = window.location.pathname.split('/game/')[1]
         let r = await fetch('/api/get/game/'+gameid)
         let g = await r.json()
         if (g.data != null) {
-            console.log(g.data)
             const go = Object.create(gameObject)
-
             go.id = g.data._id
             go.latest = g.data.latest
             go.whos_turn = g.data.whos_turn
@@ -58,6 +67,7 @@ async function loadGames(u) {
             go.display()
         }
     } else if (window.location.pathname.includes('/history/')) {
+        sendAnalyticalData('view_game_history', {'user': localStorage.draw_user})
         let r = await fetch('/api/get/game/'+window.location.pathname.split('/history/')[1])
         let g = await r.json()
         for (let i=0;i<g.data.history.length;i++) {
@@ -71,6 +81,7 @@ async function loadGames(u) {
             item.drawn_by = h.drawn_by
             item.index = i
             item.paid_for_hint = h.paid_for_hint
+            item.superhint_letters = h.superhint_letters
             item.display()
         }
     } else {
@@ -99,6 +110,7 @@ async function loadGames(u) {
             }
         }
     }
+    sendAnalyticalData('view_game_list', {'user': localStorage.draw_user})
     loadPlayerList()
 }
 
@@ -122,9 +134,7 @@ async function createNewGame(user, prefilled) {
             window.location.href = '/game/'+data.g._id
         }
     } 
-    gtag('event', 'create_new_game', {
-        'event_name':'create_new_game'
-    })
+
       
 }
 
@@ -153,6 +163,7 @@ async function loadPlayerList() {
 }
 
 async function dailyAward(u) {
+    sendAnalyticalData('daily_coins', {'user': localStorage.draw_user})
     let triggerReward = false
     let now = Math.floor(new Date().getTime() / 1000)
     let random = Math.floor(Math.random() * 15) + 5
