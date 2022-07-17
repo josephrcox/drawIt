@@ -47,6 +47,10 @@ app.get('/game/:id', (req,res) => {
   res.render('game.ejs')
 })
 
+app.get('/history/:id', (req,res) => {
+  res.render('history.ejs')
+})
+
 app.get('/api/award/:user/:pts', async(req,res) => {
   let u = await User.findOne({name:req.params.user})
   u.points = parseInt(u.points) + parseInt(req.params.pts)
@@ -126,8 +130,29 @@ app.get('/api/game/:game/changeturn', async(req,res) => {
   res.json(g)
 })
 
-app.get('/api/game/:game/finishguessing', async(req,res) => {
+app.get('/api/game/:game/finishguessing/:attempts', async(req,res) => {
   let g = await Game.findById(req.params.game)
+  if (g.history == null) {
+    g.history = []
+  }
+  let attempts = req.params.attempts.split(',')
+  let drawn_by = ""
+  switch(g.whos_turn) {
+    case 0: 
+      drawn_by = g.player_names[1]
+      break;
+    case 1:
+      drawn_by = g.player_names[0]
+      break;
+    
+  }
+  g.history.push({
+    word:g.latest[0],
+    points_awarded:g.latest[1],
+    img_data:g.latest[2],
+    attempts:attempts,
+    drawn_by:drawn_by
+  })
   g.latest = []
   await g.save()
   res.json(g)
@@ -144,6 +169,17 @@ app.post('/api/game/:game/updatelatest/', async(req,res) => {
     res.json({data:g})
   }
 
+})
+
+app.get('/api/historyComment/:game/:index/:user/:comment', async(req,res) => {
+  let g = await Game.findById(req.params.game)
+  let index = parseInt(req.params.index)
+  let user = req.params.user
+  let comment = req.params.comment
+
+  g.history[index].comments.push(user + ": "+comment)
+  await g.save()
+  res.json({data:g})
 })
 
 app.get('/api/get/user/:user/', async(req,res) => {
@@ -184,7 +220,7 @@ app.get("*", (req,res) => {
     res.redirect('/')
 })
 
-const testingAccountName = "test1234"
+const testingAccountName = "test"
 
 async function cleanUp() {
   User.find({}, async function(err,u) {
@@ -200,12 +236,17 @@ async function cleanUp() {
         let newarray = []
         for (let g=0;g<u[i].current_game_ids.length;g++) {
           let g = await Game.findById(u[i].current_game_ids[i])
-console.log(g)
-          let p1 = await User.findById(g.player_ids[0])
-          let p2 = await User.findById(g.player_ids[1])
-          if (g != null && p1 != null && p2 != null && !p1.name.includes(testingAccountName) && !p2.name.includes(testingAccountName)) {
-            newarray.push(g.id)
+          if (g != null) {
+            let p1 = await User.findById(g.player_ids[0])
+            let p2 = await User.findById(g.player_ids[1])
+            if (g != null && p1 != null && p2 != null && !p1.name.includes(testingAccountName) && !p2.name.includes(testingAccountName)) {
+              newarray.push(g.id)
+            }
+          } else {
+            await Game.findByIdAndDelete(u[i].current_game_ids[i])
+            console.log("Game deleted: "+u[i].current_game_ids[g])
           }
+
 
         }
         u[i].current_game_ids = newarray
@@ -226,7 +267,7 @@ console.log(g)
   
 }
 
-//cleanUp() 
+cleanUp() 
 
  
 const port = process.env.PORT || 8080;

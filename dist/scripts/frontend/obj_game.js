@@ -6,8 +6,10 @@ export const gameObject = {
     whos_turn:-1,
     id:"",
     total_turns:-1,
+    history:[],
 
     list() {
+        console.log(this.history)
         localStorage.draw_submitvalidate = "false"
         const home_yourturn_list = document.getElementById('home_yourturn_list')
         const home_waiting_list = document.getElementById('home_waiting_list')
@@ -29,15 +31,27 @@ export const gameObject = {
         deleteX.classList.add('deleteGameButton')
         deleteX.innerHTML = "Delete"
         deleteX.addEventListener(touchEvent, async function() {
-            const response = await fetch('/api/game/'+container.id+'/delete')
-            const data = await response.json() 
-            if (data.status == 'ok') {
-                containerwithx.innerHTML = ""
+            let areyousurestring = "Are you sure?"
+            if (deleteX.innerHTML == areyousurestring) {
+                const response = await fetch('/api/game/'+container.id+'/delete')
+                const data = await response.json() 
+                if (data.status == 'ok') {
+                    containerwithx.innerHTML = ""
+                } else {
+                    alert(data)
+                }
             } else {
-                alert(data)
+                deleteX.innerHTML = areyousurestring
             }
+
         })
-        containerwithx.append(container, deleteX)
+        let game_history = document.createElement('button')
+        game_history.classList.add('gameHistoryButton')
+        game_history.innerHTML = "History"
+        game_history.addEventListener(touchEvent, async function() {
+            window.location.href = '/history/'+container.id
+        })
+        containerwithx.append(container, game_history, deleteX)
 
         if (this.player_names[this.whos_turn] == currentPlayerName) {
 
@@ -136,6 +150,7 @@ export const gameObject = {
                 // changeTurn(image.dataset.gameID)
             } else {
                 // guessing state
+                let attempts = [] // list of attempted words
                 hint.style.display = ''
                 canvas.style.display = 'none'
                 image.style.display = ''
@@ -150,9 +165,10 @@ export const gameObject = {
                         if (guess.value.toLowerCase() == image.dataset.value.toLowerCase()) {
                             guess.setAttribute('placeholder', '')
                             await awardPoints("", parseInt(image.dataset.points), image.dataset.gameID)
-                            await finishGuessing(image.dataset.gameID)
+                            await finishGuessing(image.dataset.gameID, attempts)
                             window.location.reload()
                         } else {
+                            attempts.push(guess.value)
                             guess.value = ""
                             guess.setAttribute('placeholder', 'Incorrect')
     
@@ -189,8 +205,8 @@ async function changeTurn(gameID) {
     const response = await fetch('/api/game/'+gameID+'/changeturn' )
 }
 
-async function finishGuessing(gameID) {
-    const response = await fetch('/api/game/'+gameID+'/finishguessing')
+async function finishGuessing(gameID, attempts) {
+    const response = await fetch('/api/game/'+gameID+'/finishguessing/'+attempts)
 }
 
 function returnRandomWords() {

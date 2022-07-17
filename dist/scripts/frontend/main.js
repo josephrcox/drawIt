@@ -1,4 +1,5 @@
 import { gameObject, awardPoints } from "/dist/scripts/frontend/obj_game.js"
+import { historyItemObject } from "/dist/scripts/frontend/obj_history_item.js"
 
 function init_frontend() {
     console.info("loading frontend")
@@ -52,8 +53,24 @@ async function loadGames(u) {
             go.latest = g.data.latest
             go.whos_turn = g.data.whos_turn
             go.player_names = g.data.player_names
+            go.history = g.data.history
             go.total_turns = Math.floor(parseInt(g.data.total_turns)/2)
             go.display()
+        }
+    } else if (window.location.pathname.includes('/history/')) {
+        let r = await fetch('/api/get/game/'+window.location.pathname.split('/history/')[1])
+        let g = await r.json()
+        for (let i=0;i<g.data.history.length;i++) {
+            let h = g.data.history[i]
+            let item = Object.create(historyItemObject)
+            item.word = h.word
+            item.points_awarded = h.points_awarded
+            item.img_data = h.img_data
+            item.attempts = h.attempts
+            item.comments = h.comments
+            item.drawn_by = h.drawn_by
+            item.index = i
+            item.display()
         }
     } else {
         if (data.current_game_ids == undefined) {
@@ -71,6 +88,7 @@ async function loadGames(u) {
                 go.whos_turn = g.data.whos_turn
                 go.player_names = g.data.player_names
                 go.total_turns = Math.floor(parseInt(g.data.total_turns)/2)
+                go.history = g.data.history
                 if (window.location.pathname.includes('/game/')) {
                     console.log("game")
                     go.display()
