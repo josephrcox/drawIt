@@ -12,6 +12,7 @@ export const historyItemObject = {
         container.dataset.index = this.index
         container.classList.add('history_container')
         container.innerHTML += "<span style='font-weight:700'>"+this.drawn_by + "</span> drew <span style='font-weight:700;color:red;'>" + this.word + "</span> for <span style='font-weight:700;color:blue;'>"+this.points_awarded + " coins</span><br/>"
+        container.innerHTML += "<span style='font-weight:700;font-size:14px;'>Guesses: </span><span style='font-size:14px;'>" +this.attempts+ "</span><br/>"
         container.innerHTML += "<img src='"+this.img_data+"'>"
         container.innerHTML += "<br/>Comments<br/>"
         const commentContainer = document.createElement("div")
