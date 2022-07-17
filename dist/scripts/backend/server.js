@@ -155,6 +155,12 @@ app.get('/api/game/:game/finishguessing/:attempts', async(req,res) => {
   })
   g.latest = []
   await g.save()
+  g = await Game.findById(req.params.game)
+  if (g.latest != []) {
+    console.log("scraping latest failed")
+    g.latest = []
+    await g.save()
+  }
   res.json(g)
 })
 
