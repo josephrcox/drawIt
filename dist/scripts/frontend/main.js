@@ -107,10 +107,10 @@ document.getElementById('createNewGame').onclick = function() {
     
 }
 
-async function createNewGame(user) {
+async function createNewGame(user, prefilled) {
     let vsplayer = ""
-    if (user == null || user == undefined) {
-        vsplayer = prompt("New game with who?")
+    if (user == null || user == undefined || prefilled.length > 0) {
+        vsplayer = prompt("New game with who?", prefilled)
     } else {
         vsplayer = user
     }
@@ -143,7 +143,7 @@ async function loadPlayerList() {
     let playerButtons = document.getElementsByClassName('playerbutton')
     for (let i=0;i<playerButtons.length;i++) {
         playerButtons[i].onclick = function() {
-            createNewGame(playerButtons[i].innerText.split(" (")[0])
+            createNewGame(playerButtons[i].innerText.split(" (")[0], playerButtons[i].innerText.split(" (")[0])
         }
     }
 }
