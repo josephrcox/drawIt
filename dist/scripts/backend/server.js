@@ -130,7 +130,7 @@ app.get('/api/game/:game/changeturn', async(req,res) => {
   res.json(g)
 })
 
-app.get('/api/game/:game/finishguessing/:attempts', async(req,res) => {
+app.get('/api/game/:game/finishguessing/:attempts/:paidforhint', async(req,res) => {
   let g = await Game.findById(req.params.game)
   if (g.history == null) {
     g.history = []
@@ -151,7 +151,8 @@ app.get('/api/game/:game/finishguessing/:attempts', async(req,res) => {
     points_awarded:g.latest[1],
     img_data:g.latest[2],
     attempts:attempts,
-    drawn_by:drawn_by
+    drawn_by:drawn_by,
+    paid_for_hint:req.params.paid
   })
   g.latest = []
   await g.save()

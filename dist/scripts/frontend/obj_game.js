@@ -7,6 +7,7 @@ export const gameObject = {
     id:"",
     total_turns:-1,
     history:[],
+    paid_for_hint:false,
 
     list() {
         
@@ -213,7 +214,11 @@ async function finishGuessing(gameID, attempts) {
     if (attempts == "") {
         attempts = "none"
     } 
-    const response = await fetch('/api/game/'+gameID+'/finishguessing/'+attempts)
+    let paid = false
+    if (document.getElementById('payforhint').style.display == "none") {
+        paid = true
+    }
+    const response = await fetch('/api/game/'+gameID+'/finishguessing/'+attempts+"/"+paid)
     
 }
 

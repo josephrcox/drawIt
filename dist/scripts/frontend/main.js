@@ -70,6 +70,7 @@ async function loadGames(u) {
             item.comments = h.comments
             item.drawn_by = h.drawn_by
             item.index = i
+            item.paid_for_hint = h.paid_for_hint
             item.display()
         }
     } else {

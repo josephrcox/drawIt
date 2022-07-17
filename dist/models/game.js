@@ -7,7 +7,8 @@ const historicalItems = new mongoose.Schema(
         img_data:{type:String, required:true},
         attempts:{type:Array, required:true, default:[]},
         comments:{type:Array, required:true, default:[]},
-        drawn_by:{type:String, required:true}
+        drawn_by:{type:String, required:true},
+        paid_for_hint:{type:Boolean, required:false}
     }, {timestamps:true}
 )
 
