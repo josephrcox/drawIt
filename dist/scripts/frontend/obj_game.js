@@ -9,7 +9,7 @@ export const gameObject = {
     history:[],
 
     list() {
-        console.log(this.history)
+        
         localStorage.draw_submitvalidate = "false"
         const home_yourturn_list = document.getElementById('home_yourturn_list')
         const home_waiting_list = document.getElementById('home_waiting_list')
@@ -60,6 +60,10 @@ export const gameObject = {
             })
             home_yourturn_list.append(containerwithx)
         } else {
+            container.dataset.latest_word = this.latest[0]
+            container.addEventListener(touchEvent, function() {
+                alert('The word they must guess is '+container.dataset.latest_word)
+            })
             home_waiting_list.append(containerwithx)
         }
         
