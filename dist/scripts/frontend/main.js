@@ -122,6 +122,10 @@ async function createNewGame(user, prefilled) {
             window.location.href = '/game/'+data.g._id
         }
     } 
+    gtag('event', 'create_new_game', {
+        'event_name':'create_new_game'
+    })
+      
 }
 
 async function loadPlayerList() {
@@ -163,6 +167,8 @@ async function dailyAward(u) {
         alert(`Today's daily reward is ${random} coins! Have fun!`)
         localStorage.draw_lastplayed = Math.floor(new Date().getTime() / 1000)
         await awardPoints(localStorage.draw_user, random)
+        //await fetch('/api/add/points/'+localStorage.draw_user+'/'+random)
         window.location.reload()
     }
 }
+
