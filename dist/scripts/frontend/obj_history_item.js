@@ -34,7 +34,7 @@ export const historyItemObject = {
 
         container.append(commentContainer,commentInput)
 
-        document.querySelector('.history_area').append(container)
+        document.querySelector('.history_area').insertBefore(container, document.querySelector('.history_area').firstChild)
     }
 }
 

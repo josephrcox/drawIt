@@ -210,7 +210,11 @@ async function changeTurn(gameID) {
 }
 
 async function finishGuessing(gameID, attempts) {
+    if (attempts == "") {
+        attempts = "none"
+    } 
     const response = await fetch('/api/game/'+gameID+'/finishguessing/'+attempts)
+    
 }
 
 function returnRandomWords() {
