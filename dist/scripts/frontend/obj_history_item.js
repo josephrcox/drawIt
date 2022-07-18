@@ -17,7 +17,7 @@ export const historyItemObject = {
         if (this.paid_for_hint == "true" || this.paid_for_hint == true) {
             container.innerHTML += "<span style='font-style:italic;'>They paid for a hint</span><br/>"
         }
-        if (this.superhint_letters >= 0) {
+        if (this.superhint_letters > 0) {
             container.innerHTML += "<span style='font-style:italic;'>They used a superhint</span><br/>"
         }
         
