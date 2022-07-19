@@ -37,8 +37,6 @@ connection.once("open", function(res) {
 const User = require('../../models/user')
 const Game = require('../../models/game')
 
-
-
 app.get('/', (req,res) => {
     res.render('home.ejs')
 })
@@ -51,8 +49,45 @@ app.get('/history/:id', (req,res) => {
   res.render('history.ejs')
 })
 
+app.get('/history/:id/:index', (req,res) => {
+  res.render('history.ejs')
+})
+
 app.get('/feed/', (req,res) => {
   res.render('history.ejs')
+})
+
+app.get('/notifications', (req,res) => {
+  res.render('notifications.ejs')
+})
+
+async function createNotification(username,type,gameid,index, initiator) {
+  User.find({name:username}, function(err,docs) {
+    if (docs.length > 0) {
+      let n = {
+        type: type,
+        gameid: gameid,
+        index: index,
+        initiator: initiator
+      }
+      docs[0].notifications.push(n)
+      docs[0].save()
+    }
+
+  })
+}
+
+app.get('/api/get/notifications/:user', async(req,res) => {
+  let u = await User.findOne({name:req.params.user})
+  res.json({data:u.notifications})
+})
+
+app.get('/api/notification/delete/:user/:id', async(req,res) => {
+  let u = await User.findOne({name:req.params.user})
+  let index = u.notifications.indexOf(req.params.id)
+  u.notifications.splice(index,1)
+  await u.save()
+  res.json({data:u.notifications})
 })
 
 app.get('/api/award/:user/:pts', async(req,res) => {
@@ -190,8 +225,16 @@ app.get('/api/historyComment/:game/:index/:user/:comment', async(req,res) => {
   let index = parseInt(req.params.index)
   let user = req.params.user
   let comment = req.params.comment
+  let usertobenotified = ""
+
+  if (g.player_names[0] == user) {
+    usertobenotified = g.player_names[1]
+  } else {
+    usertobenotified = g.player_names[0]
+  }
 
   g.history[index].comments.push(user + ": "+comment)
+  createNotification(usertobenotified, "commented", g.id, parseInt(req.params.index), user)
   await g.save()
   res.json({data:g})
 })
@@ -324,6 +367,15 @@ async function correctHistory() {
     
   })
 }
+
+async function implementNotifs() {
+  let u = await User.find({})
+  for (let i=0;i<u.length;i++) {
+    u[i].notifications = []
+  }
+}
+
+implementNotifs()
 
 // cleanUp() 
 correctHistory()

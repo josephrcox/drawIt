@@ -47,6 +47,14 @@ async function loadGames(u) {
     dailyAward(localStorage.draw_user)
     document.getElementById('currentScore').style.display = ''
     document.getElementById('currentScore').innerText = ""+data.points+" 🪙"
+    if (data.notifications.length > 0) {
+        document.getElementById('notifBell').style.display = ''
+        document.getElementById('notifBell').innerText = ""+data.notifications.length+" 🔔"
+        document.getElementById('notifBell').addEventListener('click', function() { 
+            window.location.href = "/notifications"
+        })
+    }
+
 
     gtag('set', 'user_properties', {
         username: localStorage.draw_user,
@@ -71,8 +79,14 @@ async function loadGames(u) {
         }
     } else if (window.location.pathname.includes('/history/')) {
         sendAnalyticalData('view_game_history', {'user': localStorage.draw_user})
-        let r = await fetch('/api/get/game/'+window.location.pathname.split('/history/')[1])
+        let r = await fetch('/api/get/game/'+window.location.pathname.split('/')[2])
         let g = await r.json()
+        if (window.location.pathname.split('/').length == 4) {
+            g.data.history = [g.data.history[window.location.pathname.split('/')[3]]]
+        }
+        console.log(g.data.history)
+       
+
         for (let i=0;i<g.data.history.length;i++) {
             let h = g.data.history[i]
             let item = Object.create(historyItemObject)
@@ -112,6 +126,35 @@ async function loadGames(u) {
             item.gameid = h.gameid
             item.display()
         }
+    } else if (window.location.pathname.includes('/notifications')) {
+        sendAnalyticalData('view_notifications', {'user': localStorage.draw_user})
+        let r = await fetch('/api/get/notifications/'+localStorage.draw_user)
+        let d = await r.json()
+
+        if (d.data.length > 0) {
+            for (let i=0;i<d.data.length;i++) {
+                let container = document.createElement('div')
+                let notif = document.createElement('div')
+                container.className = 'notification'
+                notif.innerHTML = d.data[i].initiator+" "+d.data[i].type+" on <a href='/history/"+d.data[i].gameid+"/"+d.data[i].index+"'>this game</a>"
+                let del = document.createElement('button')
+                del.className = 'deleteNotification'
+                del.innerText = "✔️"
+                del.dataset.id = d.data[i].id
+                del.onclick = async function() {
+                    await fetch('/api/notification/delete/'+localStorage.draw_user+'/'+del.dataset.id)
+                    container.innerHTML = ""
+                    container.style.display = 'none'
+                }
+                container.append(del,notif)
+    
+                document.getElementById("notif_area").append(container)
+            }
+        } else {
+            document.getElementById("notif_area").innerHTML = "No notifications"
+        }
+
+
     } else {
         if (data.current_game_ids == undefined) {
             window.location.reload()
