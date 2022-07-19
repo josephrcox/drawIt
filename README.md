@@ -1,7 +1,7 @@
 # DrawIt
 
 # What is this?
-Very basic draw something clone app that I created in less than 24 hours. Built using HTML Canvas, Javascript, with MongoDB and NodeJS.
+Drawing game that I originally created in less than 24 hours. Built using HTML Canvas, Javascript, with MongoDB and NodeJS.
 
 Playable here - https://www.drawit.lol/
 
