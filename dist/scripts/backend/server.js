@@ -51,6 +51,10 @@ app.get('/history/:id', (req,res) => {
   res.render('history.ejs')
 })
 
+app.get('/feed/', (req,res) => {
+  res.render('history.ejs')
+})
+
 app.get('/api/award/:user/:pts', async(req,res) => {
   let u = await User.findOne({name:req.params.user})
   u.points = parseInt(u.points) + parseInt(req.params.pts)
@@ -153,7 +157,9 @@ app.get('/api/game/:game/finishguessing/:attempts/:paidforhint/:superhint', asyn
     attempts:attempts,
     drawn_by:drawn_by,
     paid_for_hint:req.params.paid,
-    superhint_letters:parseInt(req.params.superhint)
+    superhint_letters:parseInt(req.params.superhint),
+    gameid:g.id,
+    player_names:g.player_names,
   })
   g.latest = []
   await g.save()
@@ -218,6 +224,29 @@ app.get('/api/get/game/:game/', async(req,res) => {
 
 })
 
+app.get('/api/get/feed/', async(req,res) => {
+  Game.find({}, async function(err,docs) {
+    let historyItems = []
+    for (let i=0;i<docs.length;i++) {
+      if (err || docs[i] == null) {
+        console.log(err, docs[i])
+      } else {
+        if (docs[i].history != null) {
+          for (let j=0;j<docs[i].history.length;j++) {
+            historyItems.push(docs[i].history[j])
+            
+          }
+        }
+      }
+    }
+    
+    console.log(historyItems[0].word)
+    historyItems.sort((a, b) => a.createdAt - b.createdAt)
+
+    res.json({data:historyItems})
+  })
+})
+
 app.get('/api/game/:id/delete', async(req,res) => {
     let g = await Game.findByIdAndDelete(req.params.id)
     let g2 = await Game.findByIdAndDelete(req.params.id)
@@ -275,7 +304,29 @@ async function cleanUp() {
   
 }
 
-cleanUp() 
+async function correctHistory() {
+  Game.find({}, async function(err,docs) {
+    for (let i=0;i<docs.length;i++) {
+      for (let j=0;j<docs[i].history.length;j++) {
+          console.log(docs[i].player_names[0])
+          if (docs[i].history[j].player_names == [] ) { 
+            docs[i].history[j].player_names = []
+            docs[i].history[j].player_names.push(docs[i].player_names[0])
+            docs[i].history[j].player_names.push(docs[i].player_names[1])
+
+          }
+          docs[i].history[j].index = j
+
+          docs[i].history[j].gameid = docs[i].id
+        await docs[i].save()
+      }
+    }
+    
+  })
+}
+
+// cleanUp() 
+correctHistory()
 
  
 const port = process.env.PORT || 8080;

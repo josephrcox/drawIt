@@ -10,6 +10,9 @@ const historicalItems = new mongoose.Schema(
         drawn_by:{type:String, required:true},
         paid_for_hint:{type:Boolean, required:false},
         superhint_letters:{type:Number, required:false},
+        player_names:{type:Array, required:false, default:[]},
+        gameid:{type:String, required:false, default:""},
+        index:{type:Number, required:false, default:-1},
     }, {timestamps:true}
 )
 

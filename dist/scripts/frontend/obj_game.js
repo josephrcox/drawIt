@@ -62,6 +62,7 @@ export const gameObject = {
             container.addEventListener(touchEvent, function() {
                 window.location.href = '/game/'+container.id
             })
+            container.classList.add('animated','wobble')
             home_yourturn_list.append(containerwithx)
         } else {
             container.dataset.latest_word = this.latest[0]

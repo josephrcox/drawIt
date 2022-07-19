@@ -1,6 +1,9 @@
 import { gameObject, awardPoints } from "/dist/scripts/frontend/obj_game.js"
 import { historyItemObject } from "/dist/scripts/frontend/obj_history_item.js"
 
+let home_yourturn_list = document.getElementById('home_yourturn_list')
+let home_waiting_list = document.getElementById('home_waiting_list')
+
 function sendAnalyticalData(event_name, event_data) {
     gtag('event', event_name, event_data)
 }
@@ -79,9 +82,34 @@ async function loadGames(u) {
             item.attempts = h.attempts
             item.comments = h.comments
             item.drawn_by = h.drawn_by
-            item.index = i
+            item.index = h.index
             item.paid_for_hint = h.paid_for_hint
             item.superhint_letters = h.superhint_letters
+            item.gameid = h.gameid
+            item.player_names = h.player_names
+            item.display()
+        }
+    } else if (window.location.pathname.includes('/feed')) {
+        sendAnalyticalData('view_feed', {'user': localStorage.draw_user})
+        let r = await fetch('/api/get/feed')
+        let g = await r.json()
+        for (let j=0;j<g.data.length;j++) {
+            // for every history item
+            let h = g.data[j]
+            let item = Object.create(historyItemObject)
+            item.word = h.word
+            item.points_awarded = h.points_awarded
+            item.img_data = h.img_data
+            item.attempts = h.attempts
+            item.comments = h.comments || []
+            item.drawn_by = h.drawn_by
+            item.date = h.createdAt
+            item.index = h.index
+            item.paid_for_hint = h.paid_for_hint
+            item.superhint_letters = h.superhint_letters
+            item.for_the_feed = true
+            item.players = h.player_names
+            item.gameid = h.gameid
             item.display()
         }
     } else {
@@ -92,7 +120,6 @@ async function loadGames(u) {
             let r = await fetch('/api/get/game/'+data.current_game_ids[i])
             let g = await r.json()
             if (g.data != null) {
-                console.log(g.data)
                 const go = Object.create(gameObject)
     
                 go.id = g.data._id
@@ -106,6 +133,7 @@ async function loadGames(u) {
                     go.display()
                 } else {
                     go.list()
+                    
                 }
             }
         }

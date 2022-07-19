@@ -7,12 +7,23 @@ export const historyItemObject = {
     drawn_by:"",
     index:-1,
     superhint_letters:-1,
+    for_the_feed:false,
+    players:[],
+    date:"",
+    gameid:"",
 
     display() {
         const container = document.createElement("div")
         container.dataset.index = this.index
+        container.dataset.gameid = this.gameid
         container.classList.add('history_container')
-        container.innerHTML += "<span style='font-weight:700'>"+this.drawn_by + "</span> drew <span style='font-weight:700;color:red;'>" + this.word + "</span> for <span style='font-weight:700;color:blue;'>"+this.points_awarded + " coins</span><br/>"
+        if (this.players.length > 0) {
+            container.innerHTML += "<span style='font-size:15px;color:yellow;'>"+this.players[0].toUpperCase() +" vs "+ this.players[1].toUpperCase()+"</span><br/>"
+        }
+        container.innerHTML += "<span style='font-weight:700'>"+this.drawn_by + "</span> drew <span style='font-weight:700;color:red;'>" + this.word + "</span> for <span style='font-weight:700;color:blue;'>"+this.points_awarded + " coins</span>"
+        let date = new Date(this.date)
+        const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+        container.innerHTML += " <span style='font-size:14px;'>("+date.toLocaleString()+ ")</span><br/>"
         container.innerHTML += "<span style='font-weight:700;font-size:14px;'>Guesses: </span><span style='font-size:14px;'>" +this.attempts+ "</span><br/>"
         if (this.paid_for_hint == "true" || this.paid_for_hint == true) {
             container.innerHTML += "<span style='font-style:italic;'>They paid for a hint</span><br/>"
@@ -35,7 +46,7 @@ export const historyItemObject = {
 
         commentInput.addEventListener('keydown', function(e) {
             if (e.key == "Enter" && commentInput.value.length > 0) {
-                comment(container.dataset.index, commentInput.value)
+                comment(container.dataset.index, commentInput.value, container.dataset.gameid)
                 commentContainer.innerHTML += "<span style='font-weight:700;'>" +localStorage.draw_user + "</span>: "+commentInput.value + "<br/>"
                 commentInput.value = ""
             }
@@ -47,7 +58,7 @@ export const historyItemObject = {
     }
 }
 
-async function comment(index, comment) {
-    const response = await fetch('/api/historyComment/'+window.location.pathname.split('/history/')[1]+"/"+index+"/"+localStorage.draw_user+"/"+comment)
+async function comment(index, comment, gameid) {
+    const response = await fetch('/api/historyComment/'+gameid+"/"+index+"/"+localStorage.draw_user+"/"+comment)
 }
 
