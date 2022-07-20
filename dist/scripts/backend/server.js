@@ -200,6 +200,7 @@ app.get('/api/game/:game/finishguessing/:attempts/:paidforhint/:superhint', asyn
     player_names:g.player_names,
     index:g.history.length
   })
+  console.log(g.history.length)
   g.latest = []
   await g.save()
   g = await Game.findById(req.params.game)
@@ -354,7 +355,6 @@ async function cleanUp() {
     } catch(err) {
         console.error(err)
     }
-  
   
 }
 
