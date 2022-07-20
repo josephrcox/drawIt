@@ -136,7 +136,12 @@ async function loadGames(u) {
                 let container = document.createElement('div')
                 let notif = document.createElement('div')
                 container.className = 'notification'
-                notif.innerHTML = d.data[i].initiator+" "+d.data[i].type+" on <a href='/history/"+d.data[i].gameid+"/"+d.data[i].index+"'>this game</a>"
+                if (d.data[i].word != null) {
+                    notif.innerHTML = d.data[i].initiator+" "+d.data[i].type+" on <a href='/history/"+d.data[i].gameid+"/"+d.data[i].index+"' style='font-style:italic;'>"+d.data[i].word+"</a>"
+                } else {
+                    notif.innerHTML = d.data[i].initiator+" "+d.data[i].type+" on <a href='/history/"+d.data[i].gameid+"/"+d.data[i].index+"'>this game</a>"
+                }
+                
                 let del = document.createElement('button')
                 del.className = 'deleteNotification'
                 del.innerText = "✔️"

@@ -62,16 +62,19 @@ app.get('/notifications', (req,res) => {
 })
 
 async function createNotification(username,type,gameid,index, initiator) {
-  User.find({name:username}, function(err,docs) {
+  let g = await Game.findById(gameid)
+  User.find({name:username}, async function(err,docs) {
+    console.log(docs)
     if (docs.length > 0) {
       let n = {
         type: type,
         gameid: gameid,
         index: index,
-        initiator: initiator
+        initiator: initiator,
+        word: g.history[index].word,
       }
       docs[0].notifications.push(n)
-      docs[0].save()
+      await docs[0].save()
     }
 
   })
