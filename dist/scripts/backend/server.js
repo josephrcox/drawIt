@@ -198,6 +198,7 @@ app.get('/api/game/:game/finishguessing/:attempts/:paidforhint/:superhint', asyn
     superhint_letters:parseInt(req.params.superhint),
     gameid:g.id,
     player_names:g.player_names,
+    index:g.history.length
   })
   g.latest = []
   await g.save()
@@ -225,6 +226,7 @@ app.post('/api/game/:game/updatelatest/', async(req,res) => {
 
 app.get('/api/historyComment/:game/:index/:user/:comment', async(req,res) => {
   let g = await Game.findById(req.params.game)
+  console.log(g)
   let index = parseInt(req.params.index)
   let user = req.params.user
   let comment = req.params.comment
@@ -306,47 +308,53 @@ app.get("*", (req,res) => {
 const testingAccountName = "test"
 
 async function cleanUp() {
-  User.find({}, async function(err,u) {
-    for (let i=0;i<u.length;i++) {
-      if (u[i].name.includes(testingAccountName)) {
-        for (let g=0;g<u[i].current_game_ids.length;g++) {
-          let newarray = []
-          await Game.findByIdAndDelete(u[i].current_game_ids[g])
-          console.log("Game deleted: "+u[i].current_game_ids[g])
-        }
-        await User.findByIdAndDelete(u[i].id)
-      } else {
-        let newarray = []
-        for (let g=0;g<u[i].current_game_ids.length;g++) {
-          let g = await Game.findById(u[i].current_game_ids[i])
-          if (g != null) {
-            let p1 = await User.findById(g.player_ids[0])
-            let p2 = await User.findById(g.player_ids[1])
-            if (g != null && p1 != null && p2 != null && !p1.name.includes(testingAccountName) && !p2.name.includes(testingAccountName)) {
-              newarray.push(g.id)
+    try {
+        User.find({}, async function(err,u) {
+            for (let i=0;i<u.length;i++) {
+              if (u[i].name.includes(testingAccountName)) {
+                for (let g=0;g<u[i].current_game_ids.length;g++) {
+                  let newarray = []
+                  await Game.findByIdAndDelete(u[i].current_game_ids[g])
+                  console.log("Game deleted: "+u[i].current_game_ids[g])
+                }
+                await User.findByIdAndDelete(u[i].id)
+              } else {
+                let newarray = []
+                for (let g=0;g<u[i].current_game_ids.length;g++) {
+                  let g = await Game.findById(u[i].current_game_ids[i])
+                  if (g != null) {
+                    let p1 = await User.findById(g.player_ids[0])
+                    let p2 = await User.findById(g.player_ids[1])
+                    if (g != null && p1 != null && p2 != null && !p1.name.includes(testingAccountName) && !p2.name.includes(testingAccountName)) {
+                      newarray.push(g.id)
+                    }
+                  } else {
+                    await Game.findByIdAndDelete(u[i].current_game_ids[i])
+                    console.log("Game deleted: "+u[i].current_game_ids[g])
+                  }
+        
+        
+                }
+                u[i].current_game_ids = newarray
+              }
             }
-          } else {
-            await Game.findByIdAndDelete(u[i].current_game_ids[i])
-            console.log("Game deleted: "+u[i].current_game_ids[g])
+          })
+          let g = await Game.find()
+          for (let i=0;i<g.length;i++) {
+            let cg = g[i]
+            let p1 = await User.findById(cg.player_ids[0])
+            let p2 = await User.findById(cg.player_ids[1])
+        
+            if (p1 == null || p2 == null) {
+              await Game.findByIdAndDelete(cg.id)
+              console.log("Game deleted: "+cg.id)
+            }
           }
 
-
-        }
-        u[i].current_game_ids = newarray
-      }
+    } catch(err) {
+        console.error(err)
     }
-  })
-  let g = await Game.find()
-  for (let i=0;i<g.length;i++) {
-    let cg = g[i]
-    let p1 = await User.findById(cg.player_ids[0])
-    let p2 = await User.findById(cg.player_ids[1])
-
-    if (p1 == null || p2 == null) {
-      await Game.findByIdAndDelete(cg.id)
-      console.log("Game deleted: "+cg.id)
-    }
-  }
+  
   
 }
 
@@ -354,7 +362,6 @@ async function correctHistory() {
   Game.find({}, async function(err,docs) {
     for (let i=0;i<docs.length;i++) {
       for (let j=0;j<docs[i].history.length;j++) {
-          console.log(docs[i].player_names[0])
           if (docs[i].history[j].player_names == [] ) { 
             docs[i].history[j].player_names = []
             docs[i].history[j].player_names.push(docs[i].player_names[0])
@@ -369,6 +376,7 @@ async function correctHistory() {
     }
     
   })
+  console.log("History corrected")
 }
 
 async function implementNotifs() {
@@ -380,7 +388,7 @@ async function implementNotifs() {
 
 implementNotifs()
 
-// cleanUp() 
+cleanUp() 
 correctHistory()
 
  
