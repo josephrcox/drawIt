@@ -239,3 +239,13 @@ margin-top: 13px;
 .modal > div {
   padding-inline: 15px;
 }
+
+@media screen and (max-width: 400px) {
+  #home_listOfGames {
+    width: 80vw;
+  }
+  #home_listOfGames, .home_game, button {
+    font-size: 16px;
+    padding: 7px;
+  }
+}
