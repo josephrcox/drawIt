@@ -235,3 +235,7 @@ margin-top: 13px;
 .deleteNotification {
   margin-right: 33px;
 }
+
+.modal > div {
+  padding-inline: 15px;
+}

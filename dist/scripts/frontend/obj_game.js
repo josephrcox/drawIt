@@ -1,4 +1,4 @@
-import { word_list } from "./word_list.js"
+import { word_list, extended_word_list } from "./word_list.js"
 
 export const gameObject = {
     latest:[],
@@ -107,12 +107,22 @@ export const gameObject = {
                 
                 modal.style.display = 'flex'
 
-                for (let i=0;i<modal.children.length-1;i++) {
-                    modal.children[i].innerHTML = choices[i] + " ("+(i+1)+" coins)"
+                for (let i=0;i<modal.children.length-2;i++) {
+                    if (localStorage.draw_extended == "true") {
+                        modal.children[i].innerHTML = choices[i] + " ("+((i+1)*3)+" coins)"
+                    } else {
+                        modal.children[i].innerHTML = choices[i] + " ("+(i+1)+" coins)"
+                    }
+
                     modal.children[i].addEventListener(touchEvent, function() {
                         // word chosen, close modal, and store locally to be used in the submit call
                         localStorage.setItem('draw_temp_chosenword', modal.children[i].innerHTML.split(' (')[0])
-                        localStorage.setItem('draw_temp_points', i+1)
+                        if (localStorage.draw_extended == "true") {
+                            localStorage.setItem('draw_temp_points', (i+1)*3)
+                        } else {
+                            localStorage.setItem('draw_temp_points', i+1)
+                        }
+                        
                         modal.style.display = 'none'
                         init_canvas()
                         canvas.style.display = 'block'
@@ -252,7 +262,13 @@ async function finishGuessing(gameID, attempts, superhint) {
 function returnRandomWords() {
     let x = []
     while (x.length < 3) {
-        x.push(word_list[Math.floor(Math.random() * word_list.length)])
+        if (localStorage.draw_extended == "true") {
+            console.info("USING EXTENDED WORD LIST")
+            x.push(extended_word_list[Math.floor(Math.random() * extended_word_list.length)])
+        } else {
+            x.push(word_list[Math.floor(Math.random() * word_list.length)])
+        }
+        
     }
     return x
 }

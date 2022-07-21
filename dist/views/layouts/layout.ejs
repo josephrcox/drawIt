@@ -26,6 +26,12 @@
         <button></button>
         <button></button>
         <button id="newwords">New words (-5 coins)</button>
+        <div>
+            <br/>
+            Use extended word list (experimental, pay for new words to sync decision)
+            <input type="checkbox" id="extended"> 
+        </div>
+
     </div>
     <div class='page-content'>
         <span id="currentScore" style="display: none;"></span>
@@ -37,7 +43,27 @@
         <%- body %>
 
         <div id="player_list"><h3>DrawIt Players (tap to start a game)</h3></div>
+
     </div>
+
+
+    <script>
+        let ex = document.getElementById("extended")
+        if (localStorage.draw_extended != null) {
+            ex.checked = localStorage.draw_extended == "true"
+        } else {
+            localStorage.draw_extended = "false"
+            ex.checked = false
+        }
+
+        ex.addEventListener('change', function() {
+            if (ex.checked) {
+                localStorage.draw_extended = "true"
+            } else {
+                localStorage.draw_extended = "false"
+            }
+        })
+    </script>
 
     <script src="/dist/scripts/frontend/main.js" type="module"></script>
 </body>
