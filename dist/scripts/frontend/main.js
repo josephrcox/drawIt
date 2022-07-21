@@ -5,7 +5,12 @@ let home_yourturn_list = document.getElementById('home_yourturn_list')
 let home_waiting_list = document.getElementById('home_waiting_list')
 
 export function sendAnalyticalData(event_name, event_data) {
-    gtag('event', event_name, event_data)
+    if (localStorage.draw_user != "joseph") {
+        gtag('event', event_name, event_data)
+    } else {
+        gtag('event', 'admin_event', 'admin_event')
+    }
+
 }
 
 function init_frontend() {
