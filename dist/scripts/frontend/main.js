@@ -239,10 +239,9 @@ async function loadPlayerList() {
 }
 
 async function dailyAward(u) {
-    sendAnalyticalData('daily_coins', {'user': localStorage.draw_user})
     let triggerReward = false
     let now = Math.floor(new Date().getTime() / 1000)
-    let random = Math.floor(Math.random() * 15) + 5
+    let random = Math.floor(Math.random() * 10) + 2
     if (localStorage.draw_lastplayed == null) {
         localStorage.draw_lastplayed = Math.floor(new Date().getTime() / 1000)
         triggerReward = true
@@ -251,6 +250,7 @@ async function dailyAward(u) {
     }
 
     if (triggerReward) {
+        sendAnalyticalData('daily_coins', {'user': localStorage.draw_user})
         alert(`Today's daily reward is ${random} coins! Have fun!`)
         localStorage.draw_lastplayed = Math.floor(new Date().getTime() / 1000)
         await awardPoints(localStorage.draw_user, random)
