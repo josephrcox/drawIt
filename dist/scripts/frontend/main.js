@@ -4,7 +4,7 @@ import { historyItemObject } from "/dist/scripts/frontend/obj_history_item.js"
 let home_yourturn_list = document.getElementById('home_yourturn_list')
 let home_waiting_list = document.getElementById('home_waiting_list')
 
-function sendAnalyticalData(event_name, event_data) {
+export function sendAnalyticalData(event_name, event_data) {
     gtag('event', event_name, event_data)
 }
 

@@ -1,4 +1,5 @@
 import { word_list, extended_word_list } from "./word_list.js"
+import { sendAnalyticalData } from "./main.js"
 
 export const gameObject = {
     latest:[],
@@ -34,11 +35,13 @@ export const gameObject = {
         
         deleteX.addEventListener(touchEvent, async function() {
             // delete game
+            
             let areyousurestring = "Are you sure?"
             if (deleteX.innerHTML == areyousurestring) {
                 const response = await fetch('/api/game/'+container.id+'/delete')
                 const data = await response.json() 
                 if (data.status == 'ok') {
+                    sendAnalyticalData("game_deleted")
                     containerwithx.innerHTML = ""
                 } else {
                     alert(data)
@@ -61,12 +64,14 @@ export const gameObject = {
 
             container.addEventListener(touchEvent, function() {
                 window.location.href = '/game/'+container.id
+                sendAnalyticalData("game_selected")
             })
             container.classList.add('animated','wobble')
             home_yourturn_list.append(containerwithx)
         } else {
             container.dataset.latest_word = this.latest[0]
             container.addEventListener(touchEvent, function() {
+                sendAnalyticalData("check_game_word")
                 alert('The word they must guess is '+container.dataset.latest_word)
             })
             home_waiting_list.append(containerwithx)
@@ -109,8 +114,10 @@ export const gameObject = {
 
                 for (let i=0;i<modal.children.length-2;i++) {
                     if (localStorage.draw_extended == "true") {
+                        sendAnalyticalData("extended_word_list")
                         modal.children[i].innerHTML = choices[i] + " ("+((i+1)*3)+" coins)"
                     } else {
+                        sendAnalyticalData("word_list")
                         modal.children[i].innerHTML = choices[i] + " ("+(i+1)+" coins)"
                     }
 
@@ -129,7 +136,7 @@ export const gameObject = {
                         info.innerHTML = "Draw <span style='font-weight:700;'>"+localStorage.draw_temp_chosenword+"</span>"
                     })
                     newwords.addEventListener('click', async function() {
-                        
+                        sendAnalyticalData("new_word_list")
                         if (parseInt(document.getElementById('currentScore').innerText) >= 5) {
                             localStorage.draw_temp_choices = null
                             await awardPoints(localStorage.draw_user, -5)
@@ -188,11 +195,13 @@ export const gameObject = {
                 guess.addEventListener('keydown', async function(e) {
                     if (e.key == "Enter" && guess.value.length > 0) {
                         if (guess.value.toLowerCase() == image.dataset.value.toLowerCase()) {
+                            sendAnalyticalData("correct_guess")
                             guess.setAttribute('placeholder', '')
                             await awardPoints("", parseInt(image.dataset.points), image.dataset.gameID)
                             await finishGuessing(image.dataset.gameID, attempts, superhint_letters)
                             window.location.reload()
                         } else {
+                            sendAnalyticalData("wrong_guess")
                             attempts.push(guess.value)
                             guess.value = ""
                             guess.setAttribute('placeholder', 'Incorrect')
@@ -202,6 +211,7 @@ export const gameObject = {
                 })
                 // User wants a hint
                 hint.addEventListener(touchEvent, async function() {
+                    sendAnalyticalData("hint")
                     if (parseInt(document.getElementById('currentScore').innerText) >= 5) {
                         await awardPoints(localStorage.draw_user, -10)
                         info.innerHTML = 'Find the '+(image.dataset.value.length)+" letter word with these letters:<br/>"+scramble(image.dataset.value)
@@ -212,6 +222,7 @@ export const gameObject = {
                 })
                 
                 superhint.addEventListener(touchEvent, async function() {
+                    sendAnalyticalData("superhint")
                     if ((guess.value.length != image.dataset.value.length) && parseInt(document.getElementById('currentScore').innerText) >= 5) {
                         superhint_letters++
                         guess.value = ""
@@ -238,9 +249,6 @@ export async function awardPoints(user, points, game) {
     } else {
         const response = await fetch('/api/award/'+user+"/"+points)
     }
-
-
-    
 }
 
 async function changeTurn(gameID) {
@@ -335,6 +343,7 @@ function init_canvas() {
     const undo = document.getElementById("drawing-undo")
     undo.style.display = ''
     undo.onclick = function() {
+        sendAnalyticalData("canvas_undo")
         var image = new Image();
         image.onload = function() {
             canvasContext.drawImage(image, 0,0)
@@ -400,6 +409,7 @@ function getMosuePositionOnCanvas(event) {
 }
 
 function clearCanvas() {
+    sendAnalyticalData("canvas_clear")
     canvasContext.fillStyle = "white"
   canvasContext.fillRect(0, 0, canvas.width, canvas.height);
 
