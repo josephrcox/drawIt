@@ -198,7 +198,7 @@ export const gameObject = {
                             sendAnalyticalData("correct_guess")
                             guess.setAttribute('placeholder', '')
                             await awardPoints("", parseInt(image.dataset.points), image.dataset.gameID)
-                            await finishGuessing(image.dataset.gameID, attempts, superhint_letters)
+                            await finishGuessing(image.dataset.gameID, attempts, superhint_letters, hint)
                             window.location.reload()
                         } else {
                             sendAnalyticalData("wrong_guess")
@@ -211,8 +211,8 @@ export const gameObject = {
                 })
                 // User wants a hint
                 hint.addEventListener(touchEvent, async function() {
-                    sendAnalyticalData("hint")
                     if (parseInt(document.getElementById('currentScore').innerText) >= 5) {
+                        sendAnalyticalData("hint")
                         await awardPoints(localStorage.draw_user, -10)
                         info.innerHTML = 'Find the '+(image.dataset.value.length)+" letter word with these letters:<br/>"+scramble(image.dataset.value)
                         hint.style.display = 'none'
@@ -255,7 +255,7 @@ async function changeTurn(gameID) {
     const response = await fetch('/api/game/'+gameID+'/changeturn' )
 }
 
-async function finishGuessing(gameID, attempts, superhint) {
+async function finishGuessing(gameID, attempts, superhint, hint) {
     if (attempts == "") {
         attempts = "none"
     } 

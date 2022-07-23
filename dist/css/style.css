@@ -240,6 +240,49 @@ margin-top: 13px;
   padding-inline: 15px;
 }
 
+
+.store_container {
+  display: flex;
+  gap: 20px;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.store-item {
+  min-width: 100px;
+  min-height: 100px;
+  border: 1px solid red;
+  padding: 20px;
+  border-radius: 30px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  background: yellow;
+  flex-wrap: wrap;
+  word-wrap: normal;
+  max-width: 100px;
+  cursor: pointer;
+}
+
+.comingsoon::before {
+  content: "COMING SOON";
+  position: fixed;
+  transform: rotate(-30deg);
+  background-color: red;
+  font-size: 20px;
+  cursor: not-allowed;
+}
+
+.store-item > span {
+  font-size: 12px;
+}
+
+
+.store-item:hover {
+  filter: drop-shadow(0px 1px 0px);
+}
+
 @media screen and (max-width: 400px) {
   #home_listOfGames {
     width: 80vw;

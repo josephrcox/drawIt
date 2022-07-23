@@ -61,6 +61,10 @@ app.get('/notifications', (req,res) => {
   res.render('notifications.ejs')
 })
 
+app.get('/store/', (req,res) => {
+  res.render('store.ejs')
+})
+
 async function createNotification(username,type,gameid,index, initiator) {
   let g = await Game.findById(gameid)
   User.find({name:username}, async function(err,docs) {
@@ -172,7 +176,7 @@ app.get('/api/game/:game/changeturn', async(req,res) => {
   res.json(g)
 })
 
-app.get('/api/game/:game/finishguessing/:attempts/:paidforhint/:superhint', async(req,res) => {
+app.get('/api/game/:game/finishguessing/:attempts/:paidforhint/:superhint/', async(req,res) => {
   let g = await Game.findById(req.params.game)
   if (g.history == null) {
     g.history = []
@@ -194,8 +198,9 @@ app.get('/api/game/:game/finishguessing/:attempts/:paidforhint/:superhint', asyn
     img_data:g.latest[2],
     attempts:attempts,
     drawn_by:drawn_by,
-    paid_for_hint:req.params.paid,
+    paid_for_hint:req.params.paidforhint,
     superhint_letters:parseInt(req.params.superhint),
+    hint_used:req.params.hint,
     gameid:g.id,
     player_names:g.player_names,
     index:g.history.length
