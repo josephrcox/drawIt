@@ -2,6 +2,8 @@ if (process.env.NODE_ENV !== 'production') {
     require('dotenv').config()
 }
 
+const STRIPE_PUBLIC_KEY = "pk_live_51LOj8hDE6ekUA9vc0NNVkwl2gAZGelNxTUMCvfWLhOosQyHCzOE2tzmeehhx1HeBy8rZVDjk3p01C0OnNvqeZLQG006BZGv59P"
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const express = require('express')
 const app = express()
 const expressLayouts = require('express-ejs-layouts')
@@ -36,6 +38,34 @@ connection.once("open", function(res) {
 
 const User = require('../../models/user')
 const Game = require('../../models/game')
+
+app.post('/payment', function(req, res){
+  stripe.customers.create({
+      email: req.body.stripeEmail,
+      source: req.body.stripeToken,
+  })
+  .then((customer) => {
+
+      return stripe.charges.create({
+          amount: 50,    
+          description: 'Coins',
+          currency: 'USD',
+          customer: customer.id
+      });
+  })
+  .then((charge) => {
+      res.send("Success")  // If no error occurs
+  })
+  .catch((err) => {
+      res.send(err)       // If some error occurs
+  });
+})
+
+app.get('/payment', (req,res) => {
+  res.render('payment.ejs', {
+    key: STRIPE_PUBLIC_KEY
+  })
+})
 
 app.get('/', (req,res) => {
     res.render('home.ejs')
