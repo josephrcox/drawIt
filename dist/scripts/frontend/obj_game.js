@@ -355,7 +355,7 @@ function init_canvas() {
 
 function handleWritingStart(event) {
   event.preventDefault();
-
+  drawingHistory.push(canvas.toDataURL("image/png"))
   const mousePos = getMosuePositionOnCanvas(event);
   
   canvasContext.beginPath();
@@ -370,7 +370,7 @@ function handleWritingStart(event) {
   canvasContext.fill();
   
   state.mousedown = true;
-  drawingHistory.push(canvas.toDataURL("image/png"))
+
 }
 
 function handleWritingInProgress(event) {
@@ -382,6 +382,7 @@ function handleWritingInProgress(event) {
     canvasContext.lineTo(mousePos.x, mousePos.y);
     canvasContext.stroke();
   }
+
 }
 
 function handleDrawingEnd(event) {
@@ -395,7 +396,6 @@ function handleDrawingEnd(event) {
   }
   
   state.mousedown = false;
-
 }
 
 function getMosuePositionOnCanvas(event) {
