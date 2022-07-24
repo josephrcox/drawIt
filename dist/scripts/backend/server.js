@@ -58,7 +58,7 @@ app.post('/payment', function(req, res){
       });
   })
   .then((charge) => {
-      res.json({status:'ok'})
+      res.send('Success! Contact Joey for your coins!')
   })
   .catch((err) => {
       res.json({status:'error', error:err})
