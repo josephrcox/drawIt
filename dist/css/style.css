@@ -254,7 +254,7 @@ margin-top: 13px;
 }
 .store-item {
   border: 1px solid red;
-  padding: 20px;
+  padding: 10px;
   border-radius: 30px;
   text-align: center;
   display: flex;
@@ -271,12 +271,13 @@ margin-top: 13px;
 
 .comingsoon::before {
   content: "COMING SOON";
-  position: fixed;
-  font-size: 15px;
+  font-size: 13px;
   cursor: not-allowed;
-  opacity: 100%;
   background-color: red;
-  transform: rotateZ(-30deg);
+  width: max-content;
+  border-radius:30px;
+  padding:5px;
+  margin-bottom:5px;
 }
 
 .store-item > span {
