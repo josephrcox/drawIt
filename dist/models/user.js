@@ -2,8 +2,8 @@ const mongoose = require('mongoose')
 
 const notificationSchema = new mongoose.Schema(
     {
-        gameid:{type:String, required:true},
-        index:{type:Number, required:true},
+        gameid:{type:String, required:false},
+        index:{type:Number, required:true}, // for gifts, used as amount
         type:{type:String, required:true},
         initiator:{type:String, required:true},
         word:{type:String, required:false},

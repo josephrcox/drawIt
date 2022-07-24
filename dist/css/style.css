@@ -27,15 +27,17 @@ image {
   object-fit: contain;
 }
 
-.header {
-  
-  font-size: 46px;
-  justify-content: space-around;
-  max-width: 80vw;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
+  .header {
+    all:unset;
+    display: flex;
+    flex-direction: column;
+    font-size: 20px;
+    width: 60vw;
+    align-self: start;
+    
+    text-align: left;
+    padding-left: 20px;
+  }
 
 .modal {
   display: none;
@@ -74,7 +76,7 @@ canvas {
 .page-content {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  /*! justify-content: center; */
   align-items: center;
   min-height: 95vh;
 
@@ -102,8 +104,10 @@ canvas {
 
 
 a {
-  all:unset;
   cursor: pointer;
+  font-style: normal;
+  text-decoration: none;
+  color: unset;
 }
 
 
@@ -119,7 +123,7 @@ a {
 
 
 #player_list {
-  width: 100%;
+  width: 90%;
 }
 
 #player_list > a {
@@ -238,6 +242,62 @@ margin-top: 13px;
 
 .modal > div {
   padding-inline: 15px;
+}
+
+
+.store_container {
+  display: flex;
+  gap: 20px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.store-item {
+  border: 1px solid red;
+  padding: 10px;
+  border-radius: 30px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  background: yellow;
+  flex-wrap: wrap;
+  word-wrap: normal;
+  width: min-content;
+  cursor: pointer;
+  min-width: 80px;
+}
+
+.comingsoon::before {
+  content: "COMING SOON";
+  font-size: 13px;
+  cursor: not-allowed;
+  background-color: red;
+  width: max-content;
+  border-radius:30px;
+  padding:5px;
+  margin-bottom:5px;
+  color:yellow;
+}
+
+.store-item > span {
+  font-size: 12px;
+}
+
+.deleteNotifications:hover {
+  scale: 1.2;
+}
+
+
+.logo {
+  height: 60px;
+}
+
+.header > div > button {
+  width: min-content;
+  background-color: blue;
+  color: white;
 }
 
 @media screen and (max-width: 400px) {

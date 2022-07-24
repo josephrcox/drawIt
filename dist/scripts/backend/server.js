@@ -1,6 +1,12 @@
+let STRIPE_PUBLIC_KEY = "pk_live_51LOj8hDE6ekUA9vc0NNVkwl2gAZGelNxTUMCvfWLhOosQyHCzOE2tzmeehhx1HeBy8rZVDjk3p01C0OnNvqeZLQG006BZGv59P"
+let stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+
 if (process.env.NODE_ENV !== 'production') {
     require('dotenv').config()
+    STRIPE_PUBLIC_KEY = "pk_test_51LOj8hDE6ekUA9vcgqqmYVw3vdqyaFjZdiki0zXoyWjBfC6JnPIBQMY526dUZ5f5Tb4sIjxAC9IBTmDiGBH3I9CN00RIozUEIN"
+    stripe = require('stripe')(process.env.STRIPE_TESTSEC_KEY)
 }
+
 
 const express = require('express')
 const app = express()
@@ -37,6 +43,34 @@ connection.once("open", function(res) {
 const User = require('../../models/user')
 const Game = require('../../models/game')
 
+app.post('/payment', function(req, res){
+  stripe.customers.create({
+      email: req.body.stripeEmail,
+      source: req.body.stripeToken,
+  })
+  .then((customer) => {
+
+      return stripe.charges.create({
+          amount: req.body.amount, 
+          description: req.body.description,
+          currency: 'USD',
+          customer: customer.id
+      });
+  })
+  .then((charge) => {
+      res.json({status:'ok'})
+  })
+  .catch((err) => {
+      res.json({status:'error', error:err})
+  });
+})
+
+app.get('/payment', (req,res) => {
+  res.render('payment.ejs', {
+    key: STRIPE_PUBLIC_KEY
+  })
+})
+
 app.get('/', (req,res) => {
     res.render('home.ejs')
 })
@@ -61,9 +95,20 @@ app.get('/notifications', (req,res) => {
   res.render('notifications.ejs')
 })
 
+app.get('/store/', (req,res) => {
+  res.render('store.ejs', {
+    key: STRIPE_PUBLIC_KEY
+  })
+})
+
 async function createNotification(username,type,gameid,index, initiator) {
   let g = await Game.findById(gameid)
   User.find({name:username}, async function(err,docs) {
+    let word = null
+    if (g != null ){
+      word = g.history[index].word
+    }
+    
     console.log(docs)
     if (docs.length > 0) {
       let n = {
@@ -71,7 +116,7 @@ async function createNotification(username,type,gameid,index, initiator) {
         gameid: gameid,
         index: index,
         initiator: initiator,
-        word: g.history[index].word,
+        word: word
       }
       docs[0].notifications.push(n)
       await docs[0].save()
@@ -93,10 +138,15 @@ app.get('/api/notification/delete/:user/:id', async(req,res) => {
   res.json({data:u.notifications})
 })
 
-app.get('/api/award/:user/:pts', async(req,res) => {
+app.get('/api/award/:user/:pts/:gift/:giftgiver', async(req,res) => {
   let u = await User.findOne({name:req.params.user})
   u.points = parseInt(u.points) + parseInt(req.params.pts)
+  if (req.params.gift == "true") {
+    createNotification(u.name, "gifted", null, req.params.pts, req.params.giftgiver)
+  }
   await u.save()
+
+
   res.json(u)
 })
 
@@ -172,7 +222,7 @@ app.get('/api/game/:game/changeturn', async(req,res) => {
   res.json(g)
 })
 
-app.get('/api/game/:game/finishguessing/:attempts/:paidforhint/:superhint', async(req,res) => {
+app.get('/api/game/:game/finishguessing/:attempts/:paidforhint/:superhint/', async(req,res) => {
   let g = await Game.findById(req.params.game)
   if (g.history == null) {
     g.history = []
@@ -194,8 +244,9 @@ app.get('/api/game/:game/finishguessing/:attempts/:paidforhint/:superhint', asyn
     img_data:g.latest[2],
     attempts:attempts,
     drawn_by:drawn_by,
-    paid_for_hint:req.params.paid,
+    paid_for_hint:req.params.paidforhint,
     superhint_letters:parseInt(req.params.superhint),
+    hint_used:req.params.hint,
     gameid:g.id,
     player_names:g.player_names,
     index:g.history.length

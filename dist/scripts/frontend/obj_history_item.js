@@ -7,6 +7,7 @@ export const historyItemObject = {
     drawn_by:"",
     index:-1,
     superhint_letters:-1,
+    paid_for_hint:false,
     for_the_feed:false,
     players:[],
     date:"",
@@ -26,10 +27,15 @@ export const historyItemObject = {
         container.innerHTML += " <span style='font-size:14px;'>("+date.toLocaleString()+ ")</span><br/>"
         container.innerHTML += "<span style='font-weight:700;font-size:14px;'>Guesses: </span><span style='font-size:14px;'>" +this.attempts+ "</span><br/>"
         if (this.paid_for_hint == "true" || this.paid_for_hint == true) {
-            container.innerHTML += "<span style='font-style:italic;'>They paid for a hint</span><br/>"
+            container.innerHTML += "<span style='font-style:italic;font-size:10px;'>They paid for a hint</span><br/>"
         }
         if (this.superhint_letters > 0) {
-            container.innerHTML += "<span style='font-style:italic;'>They used a superhint</span><br/>"
+            if (this.superhint_letters == 1) { 
+                container.innerHTML += "<span style='font-style:italic;font-size:10px;'>They used 1 superhint</span><br/>"
+            } else {
+                container.innerHTML += "<span style='font-style:italic;font-size:10px;'>They used "+this.superhint_letters+" superhints</span><br/>"
+            }
+            
         }
         
         container.innerHTML += "<img src='"+this.img_data+"'>"

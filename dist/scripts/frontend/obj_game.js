@@ -198,7 +198,7 @@ export const gameObject = {
                             sendAnalyticalData("correct_guess")
                             guess.setAttribute('placeholder', '')
                             await awardPoints("", parseInt(image.dataset.points), image.dataset.gameID)
-                            await finishGuessing(image.dataset.gameID, attempts, superhint_letters)
+                            await finishGuessing(image.dataset.gameID, attempts, superhint_letters, hint)
                             window.location.reload()
                         } else {
                             sendAnalyticalData("wrong_guess")
@@ -211,8 +211,8 @@ export const gameObject = {
                 })
                 // User wants a hint
                 hint.addEventListener(touchEvent, async function() {
-                    sendAnalyticalData("hint")
                     if (parseInt(document.getElementById('currentScore').innerText) >= 5) {
+                        sendAnalyticalData("hint")
                         await awardPoints(localStorage.draw_user, -10)
                         info.innerHTML = 'Find the '+(image.dataset.value.length)+" letter word with these letters:<br/>"+scramble(image.dataset.value)
                         hint.style.display = 'none'
@@ -243,11 +243,11 @@ export const gameObject = {
     }
 }
 
-export async function awardPoints(user, points, game) {
+export async function awardPoints(user, points, game, gift, givegiver) {
     if (user.length < 1) {
         const response = await fetch('/api/awardall/'+game+"/"+points)
     } else {
-        const response = await fetch('/api/award/'+user+"/"+points)
+        const response = await fetch('/api/award/'+user+"/"+points+"/"+gift+"/"+givegiver)
     }
 }
 
@@ -255,7 +255,7 @@ async function changeTurn(gameID) {
     const response = await fetch('/api/game/'+gameID+'/changeturn' )
 }
 
-async function finishGuessing(gameID, attempts, superhint) {
+async function finishGuessing(gameID, attempts, superhint, hint) {
     if (attempts == "") {
         attempts = "none"
     } 
@@ -355,7 +355,7 @@ function init_canvas() {
 
 function handleWritingStart(event) {
   event.preventDefault();
-
+  drawingHistory.push(canvas.toDataURL("image/png"))
   const mousePos = getMosuePositionOnCanvas(event);
   
   canvasContext.beginPath();
@@ -370,7 +370,7 @@ function handleWritingStart(event) {
   canvasContext.fill();
   
   state.mousedown = true;
-  drawingHistory.push(canvas.toDataURL("image/png"))
+
 }
 
 function handleWritingInProgress(event) {
@@ -382,6 +382,7 @@ function handleWritingInProgress(event) {
     canvasContext.lineTo(mousePos.x, mousePos.y);
     canvasContext.stroke();
   }
+
 }
 
 function handleDrawingEnd(event) {
@@ -395,7 +396,6 @@ function handleDrawingEnd(event) {
   }
   
   state.mousedown = false;
-
 }
 
 function getMosuePositionOnCanvas(event) {
