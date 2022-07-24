@@ -108,21 +108,43 @@ async function createNotification(username,type,gameid,index, initiator) {
     if (g != null ){
       word = g.history[index].word
     }
-    
-    console.log(docs)
     if (docs.length > 0) {
       let n = {
         type: type,
         gameid: gameid,
         index: index,
         initiator: initiator,
-        word: word
+        word: word, 
       }
       docs[0].notifications.push(n)
       await docs[0].save()
     }
-
-  })
+    if (g != null) {
+      for (let i = 0; i < g.history[index].watchers.length; i++) {
+        if (g.history[index].watchers[i] != initiator) {
+          User.find({name:g.history[index].watchers[i]}, async function(err,docs) {
+            let word = null
+            if (g != null ){
+              word = g.history[index].word
+            }
+            
+            if (docs.length > 0) {
+              let n = {
+                type: type,
+                gameid: gameid,
+                index: index,
+                initiator: initiator,
+                word: word, 
+              }
+              docs[0].notifications.push(n)
+              await docs[0].save()
+            }
+          })
+    
+        }
+        }
+      }
+    })
 }
 
 app.get('/api/get/notifications/:user', async(req,res) => {
@@ -136,6 +158,13 @@ app.get('/api/notification/delete/:user/:id', async(req,res) => {
   u.notifications.splice(index,1)
   await u.save()
   res.json({data:u.notifications})
+})
+
+app.get('/api/notifications/clearAll/:user', async(req,res) => {
+  let u = await User.findOne({name:req.params.user})
+  u.notifications = []
+  await u.save()
+  res.json({status:"ok"})
 })
 
 app.get('/api/award/:user/:pts/:gift/:giftgiver', async(req,res) => {
@@ -251,12 +280,11 @@ app.get('/api/game/:game/finishguessing/:attempts/:paidforhint/:superhint/', asy
     player_names:g.player_names,
     index:g.history.length
   })
-  console.log(g.history.length)
   g.latest = []
   await g.save()
   g = await Game.findById(req.params.game)
   if (g.latest != []) {
-    console.log("scraping latest failed")
+    // console.log("scraping latest failed")
     g.latest = []
     await g.save()
   }
@@ -278,7 +306,6 @@ app.post('/api/game/:game/updatelatest/', async(req,res) => {
 
 app.get('/api/historyComment/:game/:index/:user/:comment', async(req,res) => {
   let g = await Game.findById(req.params.game)
-  console.log(g)
   let index = parseInt(req.params.index)
   let user = req.params.user
   let comment = req.params.comment
@@ -291,6 +318,8 @@ app.get('/api/historyComment/:game/:index/:user/:comment', async(req,res) => {
   }
 
   g.history[index].comments.push(user + ": "+comment)
+  g.history[index].watchers.push(req.params.user)
+  g.history[index].watchers = uniq_fast(g.history[index].watchers)
   createNotification(usertobenotified, "commented", g.id, parseInt(req.params.index), user)
   await g.save()
   res.json({data:g})
@@ -307,7 +336,7 @@ app.get('/api/get/game/:game/', async(req,res) => {
       let u = User.find({}, async function(err,docs) {
         for (let i=0;i<docs.length;i++) {
           if (err || docs[i] == null) {
-            console.log(err, docs[i])
+            // console.log(err, docs[i])
           } else {
             var index = docs[i].current_game_ids.indexOf(req.params.game);
             if (index !== -1) {
@@ -329,7 +358,7 @@ app.get('/api/get/feed/', async(req,res) => {
     let historyItems = []
     for (let i=0;i<docs.length;i++) {
       if (err || docs[i] == null) {
-        console.log(err, docs[i])
+        // console.log(err, docs[i])
       } else {
         if (docs[i].history != null) {
           for (let j=0;j<docs[i].history.length;j++) {
@@ -340,7 +369,7 @@ app.get('/api/get/feed/', async(req,res) => {
       }
     }
     
-    console.log(historyItems[0].word)
+    // console.log(historyItems[0].word)
     historyItems.sort((a, b) => a.createdAt - b.createdAt)
 
     res.json({data:historyItems})
@@ -357,13 +386,13 @@ app.get("*", (req,res) => {
     res.redirect('/')
 })
 
-const testingAccountName = "test"
+const testingAccountName = ["test", "test2", "undefined", "Chase"]
 
 async function cleanUp() {
     try {
         User.find({}, async function(err,u) {
             for (let i=0;i<u.length;i++) {
-              if (u[i].name.includes(testingAccountName)) {
+              if (testingAccountName.indexOf(u[i].name) >= 0) {
                 for (let g=0;g<u[i].current_game_ids.length;g++) {
                   let newarray = []
                   await Game.findByIdAndDelete(u[i].current_game_ids[g])
@@ -427,20 +456,29 @@ async function correctHistory() {
     }
     
   })
-  console.log("History corrected")
+  // console.log("History corrected")
 }
 
-async function implementNotifs() {
-  let u = await User.find({})
-  for (let i=0;i<u.length;i++) {
-    u[i].notifications = []
+function uniq_fast(a) {
+  var seen = {};
+  var out = [];
+  var len = a.length;
+  var j = 0;
+  for(var i = 0; i < len; i++) {
+       var item = a[i];
+       if(seen[item] !== 1) {
+             seen[item] = 1;
+             out[j++] = item;
+       }
   }
+  return out;
 }
 
-implementNotifs()
+
+// CLEANUP SCRIPS, ONLY RUN WHEN ABSOLUTELY NECESSARY
 
 cleanUp() 
-correctHistory()
+// correctHistory()
 
  
 const port = process.env.PORT || 8080;

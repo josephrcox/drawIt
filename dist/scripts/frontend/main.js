@@ -16,16 +16,20 @@ export function sendAnalyticalData(event_name, event_data) {
 function init_frontend() {
     console.info("loading frontend")
     if (localStorage.draw_user == null) {
-        let u = prompt("Enter username")
-        if (u == null || u.length < 3) {
+        let u = prompt("Who are you? (>2, no spaces or special characters, all lowercase)")
+        u = u.toLowerCase()
+        var myRegEx  = /[^a-z\d]/i;
+        var isValid = !(myRegEx.test(u))
+        console.log(isValid)
+        if (u == null || u.length < 3 || !isValid) {
+            console.log(u)
             return init_frontend()
         }
         localStorage.draw_user = u
     }
-    localStorage.draw_user = localStorage.draw_user.toLowerCase()
 
-    var myRegEx  = /[^a-z\d]/i;
-    var isValid = !(myRegEx.test(localStorage.draw_user))
+    myRegEx  = /[^a-z\d]/i;
+    isValid = !(myRegEx.test(localStorage.draw_user))
 
     if (isValid) {
         loadGames(localStorage.draw_user)
@@ -150,7 +154,8 @@ async function loadGames(u) {
                     
                 } else {
                     if (d.data[i].word != null) {
-                        notif.innerHTML = d.data[i].initiator+" "+d.data[i].type+" on <a href='/history/"+d.data[i].gameid+"/"+d.data[i].index+"' style='font-style:italic;'>"+d.data[i].word+"</a>"
+                            notif.innerHTML = d.data[i].initiator+" "+d.data[i].type+" on <a href='/history/"+d.data[i].gameid+"/"+d.data[i].index+"' style='font-style:italic;'>"+d.data[i].word+"</a>"
+
                     } else {
                         notif.innerHTML = d.data[i].initiator+" "+d.data[i].type+" on <a href='/history/"+d.data[i].gameid+"/"+d.data[i].index+"'>this game</a>"
                     }
@@ -253,6 +258,7 @@ async function createNewGame(user, prefilled) {
     } else {
         vsplayer = user
     }
+    vsplayer = vsplayer.toLowerCase()
 
     if (vsplayer.length >= 3 && vsplayer.toLowerCase() != localStorage.draw_user) {
         const response = await fetch('/creategame/'+localStorage.draw_user+'/'+vsplayer)
@@ -305,8 +311,7 @@ async function dailyAward(u) {
         alert(`Today's daily reward is ${random} coins! Have fun!`)
         localStorage.draw_lastplayed = Math.floor(new Date().getTime() / 1000)
         await awardPoints(localStorage.draw_user, random)
-        //await fetch('/api/add/points/'+localStorage.draw_user+'/'+random)
-        window.location.reload()
+        document.getElementById('currentScore').innerHTML = (parseInt(document.getElementById('currentScore').innerHTML.split(" ")[0])+random)+" 🪙"
     }
 }
 

@@ -7,6 +7,7 @@ const notificationSchema = new mongoose.Schema(
         type:{type:String, required:true},
         initiator:{type:String, required:true},
         word:{type:String, required:false},
+        text:{type:String, required:false, default:""},
     },{timestamps:true}
 )
 

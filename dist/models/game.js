@@ -13,6 +13,7 @@ const historicalItems = new mongoose.Schema(
         player_names:{type:Array, required:false, default:[]},
         gameid:{type:String, required:false, default:""},
         index:{type:Number, required:false, default:-1},
+        watchers:{type:Array, required:false, default:[]},
     }, {timestamps:true}
 )
 
@@ -23,7 +24,7 @@ const gameSchema = new mongoose.Schema(
         player_ids:{type:Array, required:true},
         player_names:{type:Array, required:true},
         whos_turn:{type:Number, required:true, default:0},
-        total_turns:{type:Number, required:true, default:0}
+        total_turns:{type:Number, required:true, default:0},
     },
     { collection: 'games', timestamps:true}
 )
