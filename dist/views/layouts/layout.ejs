@@ -36,8 +36,12 @@
         <span id="currentScore" style="display: none;"></span>
         <span id="notifBell" style="display: none;"></span>
         <div class="header">
-            <a href='/'>DrawIt</a>
-            <a href='/feed' style="color:blue;font-size: 13px;">feed</a>
+            <a href='/'><img src='/dist/logo.svg' class="logo"></a>
+            <div>
+                <button style="margin-top: 10px;" onclick="location.href = '/feed'">Feed</button>
+                <button style="margin-top: 10px;" onclick="location.href = '/store'">Store</button>
+            </div>
+
         </div>
         <%- body %>
 

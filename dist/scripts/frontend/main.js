@@ -141,11 +141,21 @@ async function loadGames(u) {
                 let container = document.createElement('div')
                 let notif = document.createElement('div')
                 container.className = 'notification'
-                if (d.data[i].word != null) {
-                    notif.innerHTML = d.data[i].initiator+" "+d.data[i].type+" on <a href='/history/"+d.data[i].gameid+"/"+d.data[i].index+"' style='font-style:italic;'>"+d.data[i].word+"</a>"
+                if (d.data[i].type == "gifted") {
+                    if (parseInt(d.data[i].index) > 1) {
+                        notif.innerHTML = d.data[i].initiator + " <a href='/store' style='font-color:blue;'>"+d.data[i].type+" you </a>"+d.data[i].index+" coins! 💰"
+                    } else {
+                        notif.innerHTML = d.data[i].initiator + " <a href='/store' style='font-color:blue;'>"+d.data[i].type+" you </a>"+d.data[i].index+" coin! 💰"
+                    }
+                    
                 } else {
-                    notif.innerHTML = d.data[i].initiator+" "+d.data[i].type+" on <a href='/history/"+d.data[i].gameid+"/"+d.data[i].index+"'>this game</a>"
+                    if (d.data[i].word != null) {
+                        notif.innerHTML = d.data[i].initiator+" "+d.data[i].type+" on <a href='/history/"+d.data[i].gameid+"/"+d.data[i].index+"' style='font-style:italic;'>"+d.data[i].word+"</a>"
+                    } else {
+                        notif.innerHTML = d.data[i].initiator+" "+d.data[i].type+" on <a href='/history/"+d.data[i].gameid+"/"+d.data[i].index+"'>this game</a>"
+                    }
                 }
+
                 
                 let del = document.createElement('button')
                 del.className = 'deleteNotification'
@@ -165,6 +175,42 @@ async function loadGames(u) {
         }
 
 
+    } else if (window.location.pathname.includes('/store')) {
+        sendAnalyticalData('view_store', {'user': localStorage.draw_user})
+
+        let store_items = document.getElementsByClassName('store-item')
+        let giftcoins = document.getElementById("store-giftcoins")
+        let addword = document.getElementById("store-addword")
+
+        let buycoins = document.getElementById("store-buycoins")
+        let touchEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
+        let purchaseModal = document.getElementById("purchaseModal")
+
+        giftcoins.addEventListener(touchEvent, async function(e) {
+            
+            let amount = prompt("How many coins would you like to gift?")
+            let towhom = prompt("Who would you like to gift them to?")
+            let am = parseInt(amount)
+
+            if (am > 0 && towhom.length > 0 && parseInt(document.getElementById("currentScore").innerText.split(' ')[0]) >= am) {
+                sendAnalyticalData('store_giftcoins', {'user': localStorage.draw_user})
+                if (localStorage.draw_user == towhom) {
+                    alert("You can't gift yourself coins!")
+                } else {
+                    await awardPoints(towhom, am, null, true, localStorage.draw_user)
+                    await awardPoints(localStorage.draw_user, -am)
+                    window.location.reload()
+                }
+            }
+        })
+
+        addword.addEventListener(touchEvent, function(e) {
+
+        })
+
+        buycoins.addEventListener(touchEvent, function(e) {
+            window.location.href = "/payment/"
+        })
     } else {
         if (data.current_game_ids == undefined) {
             window.location.reload()

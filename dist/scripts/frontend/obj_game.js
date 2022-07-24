@@ -243,11 +243,11 @@ export const gameObject = {
     }
 }
 
-export async function awardPoints(user, points, game) {
+export async function awardPoints(user, points, game, gift, givegiver) {
     if (user.length < 1) {
         const response = await fetch('/api/awardall/'+game+"/"+points)
     } else {
-        const response = await fetch('/api/award/'+user+"/"+points)
+        const response = await fetch('/api/award/'+user+"/"+points+"/"+gift+"/"+givegiver)
     }
 }
 
