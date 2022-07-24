@@ -43,7 +43,7 @@ connection.once("open", function(res) {
 const User = require('../../models/user')
 const Game = require('../../models/game')
 
-app.post('/payment', function(req, res){
+app.post('/payment/payment', function(req, res){
   stripe.customers.create({
       email: req.body.stripeEmail,
       source: req.body.stripeToken,
