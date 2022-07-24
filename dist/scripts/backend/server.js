@@ -156,6 +156,7 @@ app.get('/api/notification/delete/:user/:id', async(req,res) => {
   let u = await User.findOne({name:req.params.user})
   let index = u.notifications.indexOf(req.params.id)
   u.notifications.splice(index,1)
+  console.log(req.params.user, req.params.id, index)
   await u.save()
   res.json({data:u.notifications})
 })
