@@ -125,7 +125,7 @@ export const gameObject = {
                         // word chosen, close modal, and store locally to be used in the submit call
                         localStorage.setItem('draw_temp_chosenword', modal.children[i].innerHTML.split(' (')[0])
                         if (localStorage.draw_extended == "true") {
-                            localStorage.setItem('draw_temp_points', (i+1)*3)
+                            localStorage.setItem('draw_temp_points', (i+1)*2)
                         } else {
                             localStorage.setItem('draw_temp_points', i+1)
                         }
