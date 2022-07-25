@@ -115,7 +115,7 @@ export const gameObject = {
                 for (let i=0;i<modal.children.length-2;i++) {
                     if (localStorage.draw_extended == "true") {
                         sendAnalyticalData("extended_word_list")
-                        modal.children[i].innerHTML = choices[i] + " ("+((i+1)*3)+" coins)"
+                        modal.children[i].innerHTML = choices[i] + " ("+((i+1)*2)+" coins)"
                     } else {
                         sendAnalyticalData("word_list")
                         modal.children[i].innerHTML = choices[i] + " ("+(i+1)+" coins)"
