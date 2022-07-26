@@ -19,6 +19,25 @@
     </script>
 </head>
 <body>    
+    <div id="alertModal">
+        <div style="background-color: #cecece;border-radius:30px;padding:10px;">
+            <img src="/dist/logo.svg" class="logo">
+        </div>
+
+        <h3></h3>
+        <span id="modal_close">X</span>
+
+        <button class="modal_ok" style="display: none;">OK</button>
+
+        <input type="text" id="modal_login_input" style="display: none;" class="modal_login" autocapitalize="none" autocomplete="off">
+        <button class="modal_login" style="display: none;" id="modal_login_submit">Login or create account</button>
+
+        <input type="text" id="modal_cng_input" style="display: none;" class="modal_createnewgame" autocapitalize="none" autocomplete="off">
+        <button class="modal_createnewgame" style="display: none;" id="modal_cng_submit">Get drawin'</button>
+
+
+        <div id="modal_logs"></div>
+    </div>
     <div class="modal" id="modal">
         Pick the next word!
         <button></button>

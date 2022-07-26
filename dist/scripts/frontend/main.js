@@ -3,6 +3,8 @@ import { historyItemObject } from "/dist/scripts/frontend/obj_history_item.js"
 
 let home_yourturn_list = document.getElementById('home_yourturn_list')
 let home_waiting_list = document.getElementById('home_waiting_list')
+let modal = document.getElementById("alertModal")
+let modal_logs = document.getElementById("modal_logs")
 
 export function sendAnalyticalData(event_name, event_data) {
     if (localStorage.draw_user != "joseph") {
@@ -16,29 +18,10 @@ export function sendAnalyticalData(event_name, event_data) {
 function init_frontend() {
     console.info("loading frontend")
     if (localStorage.draw_user == null) {
-        let u = prompt("Who are you? (>2, no spaces or special characters, all lowercase)")
-        u = u.toLowerCase()
-        var myRegEx  = /[^a-z\d]/i;
-        var isValid = !(myRegEx.test(u))
-        console.log(isValid)
-        if (u == null || u.length < 3 || !isValid) {
-            console.log(u)
-            return init_frontend()
-        }
-        localStorage.draw_user = u
-    }
-
-    myRegEx  = /[^a-z\d]/i;
-    isValid = !(myRegEx.test(localStorage.draw_user))
-
-    if (isValid) {
-        loadGames(localStorage.draw_user)
+        alertModal("Login", "login", false)
     } else {
-        localStorage.clear()
-        window.location.reload()
+        loadGames(localStorage.draw_user)
     }
-
-
 }
 
 init_frontend()
@@ -247,28 +230,19 @@ async function loadGames(u) {
 }
 
 document.getElementById('createNewGame').onclick = function() {
-    createNewGame()
-    
+    alertModal("Create new game", "createnewgame", true)
 }
 
-async function createNewGame(user, prefilled) {
-    let vsplayer = ""
-    if (user == null || user == undefined || prefilled.length > 0) {
-        vsplayer = prompt("New game with who?", prefilled)
-    } else {
-        vsplayer = user
-    }
-    vsplayer = vsplayer.toLowerCase()
-
-    if (vsplayer.length >= 3 && vsplayer.toLowerCase() != localStorage.draw_user) {
-        const response = await fetch('/creategame/'+localStorage.draw_user+'/'+vsplayer)
+async function createNewGame(user) {
+    if (user.length >= 3 && user.toLowerCase() != localStorage.draw_user) {
+        const response = await fetch('/creategame/'+localStorage.draw_user+'/'+user)
         const data = await response.json()
         if (data != null) {
             window.location.href = '/game/'+data.g._id
         }
-    } 
-
-      
+    } else {
+        modal_logs.innerText = "Please enter a valid player"
+    }
 }
 
 async function loadPlayerList() {
@@ -308,10 +282,81 @@ async function dailyAward(u) {
 
     if (triggerReward) {
         sendAnalyticalData('daily_coins', {'user': localStorage.draw_user})
-        alert(`Today's daily reward is ${random} coins! Have fun!`)
+        alertModal(`Today's daily reward is ${random} coins! Have fun!`, "ok", true)
         localStorage.draw_lastplayed = Math.floor(new Date().getTime() / 1000)
         await awardPoints(localStorage.draw_user, random)
         document.getElementById('currentScore').innerHTML = (parseInt(document.getElementById('currentScore').innerHTML.split(" ")[0])+random)+" 🪙"
     }
 }
 
+export function alertModal(heading, scenario, allowClose) {
+    for (let i=0;i<modal.children.length;i++) {
+        modal.children[i].style.display = 'none'
+    }
+    modal.style.display = "flex"
+    modal.children[0].style.display = ""
+    modal.children[1].innerText = heading
+    modal.children[1].style.display = ""
+
+    if (allowClose == true) {
+        modal.children[2].style.display = "" // close button
+    }
+
+    document.querySelector(".page-content").style.display = 'none'
+
+    Array.from(document.getElementsByClassName("modal_"+scenario)).forEach(e => {
+        e.style.display = ''
+        if (scenario == "login") {
+            document.getElementById("modal_login_submit").onclick = function() {
+                login(document.getElementById("modal_login_input").value)
+            }
+            document.getElementById("modal_login_input").addEventListener('keydown', function(e) {
+                if (e.keyCode == 13) {
+                    login(document.getElementById("modal_login_input").value)
+                }
+            })
+        } else if (scenario == "createnewgame") {
+            document.getElementById("modal_cng_submit").onclick = function() {
+                createNewGame(document.getElementById("modal_cng_input").value)
+            }
+            document.getElementById("modal_cng_input").addEventListener('keydown', function(e) {
+                if (e.keyCode == 13) {
+                    createNewGame(document.getElementById("modal_cng_input").value)
+                }
+            })
+        } else if (scenario == "ok") {
+            document.querySelector(".modal_ok").onclick = function() {
+                closeModal()
+            }
+        }
+
+    });
+}
+
+export function closeModal() {
+    modal.style.display = "none"
+    document.querySelector(".page-content").style.display = ''
+}
+
+function login(u) {
+    u = u.toLowerCase()
+    var myRegEx  = /[^a-z\d]/i;
+    var isValid = !(myRegEx.test(u))
+    console.log(isValid)
+    if (u == null || u.length < 3 || !isValid) {
+        console.log(u)
+        return init_frontend()
+    }
+    localStorage.draw_user = u
+
+    myRegEx  = /[^a-z\d]/i;
+    isValid = !(myRegEx.test(localStorage.draw_user))
+
+    if (isValid) {
+        loadGames(localStorage.draw_user)
+        closeModal()
+    } else {
+        localStorage.clear()
+        window.location.reload()
+    }
+}
