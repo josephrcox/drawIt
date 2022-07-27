@@ -3,6 +3,8 @@ const mongoose = require('mongoose')
 const historicalItems = new mongoose.Schema(
     {
         word:{type:String, required:true},
+        is_custom:{type:Boolean, required:true, default:false},
+        custom_word_creator:{type:String, required:false},
         points_awarded:{type:Number, required:true},
         img_data:{type:String, required:true},
         attempts:{type:Array, required:true, default:[]},

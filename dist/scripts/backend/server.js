@@ -42,6 +42,150 @@ connection.once("open", function(res) {
 
 const User = require('../../models/user')
 const Game = require('../../models/game')
+const Word = require('../../models/word')
+
+
+async function createNotification(username,type,gameid,index, initiator) {
+  let g = await Game.findById(gameid)
+  User.find({name:username}, async function(err,docs) {
+    let word = null
+    if (g != null ){
+      word = g.history[index].word
+    }
+    if (docs.length > 0) {
+      let n = {
+        type: type,
+        gameid: gameid,
+        index: index,
+        initiator: initiator,
+        word: word, 
+      }
+      docs[0].notifications.push(n)
+      await docs[0].save()
+    }
+    if (g != null) {
+      for (let i = 0; i < g.history[index].watchers.length; i++) {
+        if (g.history[index].watchers[i] != initiator) {
+          User.find({name:g.history[index].watchers[i]}, async function(err,docs) {
+            let word = null
+            if (g != null ){
+              word = g.history[index].word
+            }
+            
+            if (docs.length > 0) {
+              let n = {
+                type: type,
+                gameid: gameid,
+                index: index,
+                initiator: initiator,
+                word: word, 
+              }
+              docs[0].notifications.push(n)
+              await docs[0].save()
+            }
+          })
+    
+        }
+        }
+      }
+    })
+}
+
+const testingAccountName = ["test", "test2", "undefined", "Chase"]
+
+async function cleanUp() {
+  User.find({}, async function(err,docs) {
+    for (let i =0;i<docs.length;i++) {
+      if (testingAccountName.includes(docs[i].name)) {
+        await User.deleteOne({name:docs[i].name})
+        console.log(docs[i].name + " deleted")
+      }
+    }
+
+  })
+}
+
+async function correctHistory() {
+  Game.find({}, async function(err,docs) {
+    for (let i=0;i<docs.length;i++) {
+      for (let j=0;j<docs[i].history.length;j++) {
+          if (docs[i].history[j].player_names == [] ) { 
+            docs[i].history[j].player_names = []
+            docs[i].history[j].player_names.push(docs[i].player_names[0])
+            docs[i].history[j].player_names.push(docs[i].player_names[1])
+
+          }
+          docs[i].history[j].index = j
+
+          docs[i].history[j].gameid = docs[i].id
+        await docs[i].save()
+      }
+    }
+    
+  })
+  // console.log("History corrected")
+}
+
+function uniq_fast(a) {
+  var seen = {};
+  var out = [];
+  var len = a.length;
+  var j = 0;
+  for(var i = 0; i < len; i++) {
+       var item = a[i];
+       if(seen[item] !== 1) {
+             seen[item] = 1;
+             out[j++] = item;
+       }
+  }
+  return out;
+}
+
+// CLEANUP SCRIPS, ONLY RUN WHEN ABSOLUTELY NECESSARY
+
+cleanUp() 
+// correctHistory()
+
+app.post('/api/post/addword', async function(req,res) {
+  let u = await User.findOne({name:req.body.creator})
+  if (u.points >= 60) {
+    if (req.body.word != null && req.body.word != "" && req.body.word.length >= 3 && req.body.word.length < 18) {
+      let existing = await Word.findOne({word:req.body.word})
+      if (existing == null) {
+        let c = await Word.create({
+          word: req.body.word,
+          creator: req.body.creator,
+          times_shown:0,
+          times_used:0,
+          approved_by_admin:false
+        })
+        console.log(c)
+        u.points = parseInt(u.points) - 60
+        await u.save()
+        res.json({status: "ok", data:c})
+      } else {
+        res.json({status:'error', error:"This word already exists"})
+      }
+      
+    } else {
+      res.json({status:'error', error:"Invalid word"})
+    }
+  } else {
+    res.json({status:'error', error:"Not enough coins"})
+  }
+  
+
+})
+
+app.get('/api/get/randomword', async function(req,res) {
+  let w = await Word.find({approved_by_admin:true})
+  let r = Math.floor(Math.random() * w.length)
+  w[r].times_shown = w[r].times_shown + 1
+  await w[r].save()
+  res.json({status:'ok', data:w[r]})
+})
+
+app.get('/api/get/randomwor')
 
 app.post('/payment/payment', function(req, res){
   stripe.customers.create({
@@ -100,52 +244,6 @@ app.get('/store/', (req,res) => {
     key: STRIPE_PUBLIC_KEY
   })
 })
-
-async function createNotification(username,type,gameid,index, initiator) {
-  let g = await Game.findById(gameid)
-  User.find({name:username}, async function(err,docs) {
-    let word = null
-    if (g != null ){
-      word = g.history[index].word
-    }
-    if (docs.length > 0) {
-      let n = {
-        type: type,
-        gameid: gameid,
-        index: index,
-        initiator: initiator,
-        word: word, 
-      }
-      docs[0].notifications.push(n)
-      await docs[0].save()
-    }
-    if (g != null) {
-      for (let i = 0; i < g.history[index].watchers.length; i++) {
-        if (g.history[index].watchers[i] != initiator) {
-          User.find({name:g.history[index].watchers[i]}, async function(err,docs) {
-            let word = null
-            if (g != null ){
-              word = g.history[index].word
-            }
-            
-            if (docs.length > 0) {
-              let n = {
-                type: type,
-                gameid: gameid,
-                index: index,
-                initiator: initiator,
-                word: word, 
-              }
-              docs[0].notifications.push(n)
-              await docs[0].save()
-            }
-          })
-    
-        }
-        }
-      }
-    })
-}
 
 app.get('/api/get/notifications/:user', async(req,res) => {
   let u = await User.findOne({name:req.params.user})
@@ -268,8 +366,15 @@ app.get('/api/game/:game/finishguessing/:attempts/:paidforhint/:superhint/', asy
       break;
     
   }
+  let custom_word_creator = ""
+  if (g.latest[3] == "true") {
+    let w = await Word.findOne({word:g.latest[0]})
+    custom_word_creator = w.creator
+  }
   g.history.push({
     word:g.latest[0],
+    is_custom:g.latest[3],
+    custom_word_creator:custom_word_creator,
     points_awarded:g.latest[1],
     img_data:g.latest[2],
     attempts:attempts,
@@ -298,8 +403,16 @@ app.post('/api/game/:game/updatelatest/', async(req,res) => {
     res.redirect('/')
   } else {
     g.latest = req.body.data
-  
+
     await g.save()
+
+    Word.findOne({word:g.latest[0]}, async function(err, docs) {
+      if (docs != null && err == null) {
+        docs.times_used = parseInt(docs.times_used) + 1
+      }
+      await docs.save()
+    })
+
     res.json({data:g})
   }
 
@@ -386,100 +499,6 @@ app.get('/api/game/:id/delete', async(req,res) => {
 app.get("*", (req,res) => {
     res.redirect('/')
 })
-
-const testingAccountName = ["test", "test2", "undefined", "Chase"]
-
-async function cleanUp() {
-    try {
-        User.find({}, async function(err,u) {
-            for (let i=0;i<u.length;i++) {
-              if (testingAccountName.indexOf(u[i].name) >= 0) {
-                for (let g=0;g<u[i].current_game_ids.length;g++) {
-                  let newarray = []
-                  await Game.findByIdAndDelete(u[i].current_game_ids[g])
-                  console.log("Game deleted: "+u[i].current_game_ids[g])
-                }
-                await User.findByIdAndDelete(u[i].id)
-              } else {
-                let newarray = []
-                for (let g=0;g<u[i].current_game_ids.length;g++) {
-                  let g = await Game.findById(u[i].current_game_ids[i])
-                  if (g != null) {
-                    let p1 = await User.findById(g.player_ids[0])
-                    let p2 = await User.findById(g.player_ids[1])
-                    if (g != null && p1 != null && p2 != null && !p1.name.includes(testingAccountName) && !p2.name.includes(testingAccountName)) {
-                      newarray.push(g.id)
-                    }
-                  } else {
-                    await Game.findByIdAndDelete(u[i].current_game_ids[i])
-                    console.log("Game deleted: "+u[i].current_game_ids[g])
-                  }
-        
-        
-                }
-                u[i].current_game_ids = newarray
-              }
-            }
-          })
-          let g = await Game.find()
-          for (let i=0;i<g.length;i++) {
-            let cg = g[i]
-            let p1 = await User.findById(cg.player_ids[0])
-            let p2 = await User.findById(cg.player_ids[1])
-        
-            if (p1 == null || p2 == null) {
-              await Game.findByIdAndDelete(cg.id)
-              console.log("Game deleted: "+cg.id)
-            }
-          }
-
-    } catch(err) {
-        console.error(err)
-    }
-  
-}
-
-async function correctHistory() {
-  Game.find({}, async function(err,docs) {
-    for (let i=0;i<docs.length;i++) {
-      for (let j=0;j<docs[i].history.length;j++) {
-          if (docs[i].history[j].player_names == [] ) { 
-            docs[i].history[j].player_names = []
-            docs[i].history[j].player_names.push(docs[i].player_names[0])
-            docs[i].history[j].player_names.push(docs[i].player_names[1])
-
-          }
-          docs[i].history[j].index = j
-
-          docs[i].history[j].gameid = docs[i].id
-        await docs[i].save()
-      }
-    }
-    
-  })
-  // console.log("History corrected")
-}
-
-function uniq_fast(a) {
-  var seen = {};
-  var out = [];
-  var len = a.length;
-  var j = 0;
-  for(var i = 0; i < len; i++) {
-       var item = a[i];
-       if(seen[item] !== 1) {
-             seen[item] = 1;
-             out[j++] = item;
-       }
-  }
-  return out;
-}
-
-
-// CLEANUP SCRIPS, ONLY RUN WHEN ABSOLUTELY NECESSARY
-
-cleanUp() 
-// correctHistory()
 
  
 const port = process.env.PORT || 8080;

@@ -83,6 +83,10 @@ async function loadGames(u) {
             let h = g.data.history[i]
             let item = Object.create(historyItemObject)
             item.word = h.word
+            item.is_custom = h.is_custom
+            if (h.custom_word_creator != null) {
+                item.custom_word_creator = h.custom_word_creator
+            }
             item.points_awarded = h.points_awarded
             item.img_data = h.img_data
             item.attempts = h.attempts
@@ -104,6 +108,10 @@ async function loadGames(u) {
             let h = g.data[j]
             let item = Object.create(historyItemObject)
             item.word = h.word
+            item.is_custom = h.is_custom
+            if (h.custom_word_creator != null) {
+                item.custom_word_creator = h.custom_word_creator
+            }
             item.points_awarded = h.points_awarded
             item.img_data = h.img_data
             item.attempts = h.attempts
@@ -192,8 +200,41 @@ async function loadGames(u) {
             }
         })
 
-        addword.addEventListener(touchEvent, function(e) {
+        addword.addEventListener(touchEvent, async function(e) {
+            if (document.getElementById("currentScore").innerText.split(' ')[0] >= 100) {
+                alertModal("Upload a new word to the game", "addword", true)
+            }
+            let input = document.getElementById("modal_addword_input")
+            let submit = document.getElementById("modal_addword_submit")
 
+            input.addEventListener('keyup', function(e) {
+                if (e.keyCode == 13) {
+                    submit.click()
+                }
+            })
+
+            submit.addEventListener(touchEvent, async function(e) {
+                // post request to add word
+                let bodyJSON = {
+                    "word": input.value,
+                    "creator": localStorage.draw_user,
+                }
+                const response = await fetch('/api/post/addword', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                        },
+                    method: 'POST',
+                    body: JSON.stringify(bodyJSON)
+                }); 
+                var data = await response.json()
+                if (data.status == "ok") {
+                    alertModal("Your word '"+input.value+"' has been added!", "ok", false, true)
+                } else {
+                    modalLog(data.error)
+                }
+            })
+            
         })
 
         buycoins.addEventListener(touchEvent, function(e) {
@@ -224,13 +265,14 @@ async function loadGames(u) {
                 }
             }
         }
+        sendAnalyticalData('view_game_list', {'user': localStorage.draw_user})
+        document.getElementById('createNewGame').onclick = function() {
+            alertModal("Create new game", "createnewgame", true)
+        }
     }
-    sendAnalyticalData('view_game_list', {'user': localStorage.draw_user})
-    loadPlayerList()
-}
 
-document.getElementById('createNewGame').onclick = function() {
-    alertModal("Create new game", "createnewgame", true)
+
+    loadPlayerList()
 }
 
 async function createNewGame(user) {
@@ -241,7 +283,7 @@ async function createNewGame(user) {
             window.location.href = '/game/'+data.g._id
         }
     } else {
-        modal_logs.innerText = "Please enter a valid player"
+        modalLog("Please enter a valid player")
     }
 }
 
@@ -289,10 +331,11 @@ async function dailyAward(u) {
     }
 }
 
-export function alertModal(heading, scenario, allowClose) {
+export function alertModal(heading, scenario, allowClose, reload) {
     for (let i=0;i<modal.children.length;i++) {
         modal.children[i].style.display = 'none'
     }
+    modal_logs.style.display = ''
     modal.style.display = "flex"
     modal.children[0].style.display = ""
     modal.children[1].innerText = heading
@@ -327,11 +370,35 @@ export function alertModal(heading, scenario, allowClose) {
         } else if (scenario == "ok") {
             document.querySelector(".modal_ok").onclick = function() {
                 closeModal()
+                if (reload == true) {
+                    window.location.reload()
+                }
             }
+
         }
 
     });
 }
+
+export function modalLog(log) {
+    modal_logs.style.maxHeight = '500px'
+    modal_logs.style.padding = '13px'
+    modal_logs.innerText = log
+
+    setTimeout(function() {
+        modal_logs.style.maxHeight = '0px'
+        modal_logs.style.padding = '0px'
+    }, 3000)
+    setTimeout(function() {
+        modal_logs.innerText = ""
+    }, 4000)
+    
+
+}
+
+document.getElementById("modal_close").addEventListener('click', function() {
+    closeModal()
+})
 
 export function closeModal() {
     modal.style.display = "none"

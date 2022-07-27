@@ -71,6 +71,26 @@ height: auto;
     border-radius: 10px;
     border: 1px solid gray;
   }
+
+  
+#modal_logs {
+  margin-top: 30px;
+  font-style: italic;
+  background-color: #ff655e;
+  color: white;
+  padding: 0px;
+  border-top-right-radius: 30px;
+  border-top-left-radius: 30px;
+  position: fixed;
+  bottom: 0px;
+  max-height: 0px;
+  transition: all 1s;
+  overflow: hidden;
+}
+
+button > .customword_select {
+  background-color: gold;
+}
   
   button, div {
     user-select: none;
