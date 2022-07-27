@@ -101,7 +101,7 @@ export const gameObject = {
             canvas.dataset.gameid = this.id
     
             // NO WORD - DISPLAY NEW WORDS
-            if (this.latest.length < 3) {
+            if (this.latest.length < 4) {
                 let choices = []
                 if (localStorage.draw_temp_choices == null || localStorage.draw_temp_choices == "null") {
                     choices = returnRandomWords()
