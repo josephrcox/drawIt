@@ -1,6 +1,9 @@
 import { word_list, extended_word_list } from "./word_list.js"
 import { sendAnalyticalData } from "./main.js"
 
+let modal = document.getElementById('modal')
+let touchEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
+
 export const gameObject = {
     latest:[],
     player_names:[],
@@ -28,7 +31,7 @@ export const gameObject = {
         } else {
             container.innerHTML = this.player_names[0]+" vs <span style='font-weight:700;'>"+this.player_names[1]+"</span> ("+this.total_turns+" moves)"
         }    
-        let touchEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
+        
         let deleteX = document.createElement('button')
         deleteX.classList.add('deleteGameButton')
         deleteX.innerHTML = "Delete"
@@ -98,9 +101,7 @@ export const gameObject = {
             canvas.dataset.gameid = this.id
     
             // NO WORD - DISPLAY NEW WORDS
-            if (this.latest.length != 3) {
-
-                let modal = document.getElementById('modal')
+            if (this.latest.length < 3) {
                 let choices = []
                 if (localStorage.draw_temp_choices == null || localStorage.draw_temp_choices == "null") {
                     choices = returnRandomWords()
@@ -129,7 +130,7 @@ export const gameObject = {
                         } else {
                             localStorage.setItem('draw_temp_points', i+1)
                         }
-                        
+                        localStorage.draw_customword = "false"
                         modal.style.display = 'none'
                         init_canvas()
                         canvas.style.display = 'block'
@@ -144,6 +145,10 @@ export const gameObject = {
                         }
                     })
                 }
+
+                if (Math.random() > 0.95) {
+                    drawRandomWordFromDB()
+                }
                 
                 drawing_submit.style.display = ''
                 drawing_submit.addEventListener(touchEvent, async function() {
@@ -154,8 +159,9 @@ export const gameObject = {
                             data:[
                                 localStorage.draw_temp_chosenword, 
                                 localStorage.draw_temp_points,
-                                image
-                            ]
+                                image,
+                                localStorage.draw_customword
+                            ], 
                         }
                         
                         const fetchResponse = await fetch('/api/game/'+canvas.dataset.gameid+'/updatelatest', {
@@ -190,6 +196,9 @@ export const gameObject = {
                 image.src = this.latest[2]
                 image.dataset.gameID = this.id
                 let superhint_letters = 0
+                if (this.latest[3] == "true") {
+                    image.style.border = "3px solid gold"
+                }
                 info.innerHTML = 'Find the '+(image.dataset.value.length)+" letter word"
                 // User is guessing the word
                 guess.addEventListener('keydown', async function(e) {
@@ -276,9 +285,38 @@ function returnRandomWords() {
         } else {
             x.push(word_list[Math.floor(Math.random() * word_list.length)])
         }
-        
     }
     return x
+}
+
+async function drawRandomWordFromDB() {
+    const response = await fetch('/api/get/randomword')
+    let data  = await response.json()
+
+    data = data.data
+
+    let word = document.createElement("button")
+    word.style.backgroundColor = 'gold'
+    let points = Math.floor((Math.random() * 14)+1)
+    word.innerHTML = data.word + " ("+points+" coins)"
+    modal.insertBefore(word, modal.children[0])
+
+    word.addEventListener(touchEvent, function() {
+        localStorage.draw_customword = "true"
+        // word chosen, close modal, and store locally to be used in the submit call
+        localStorage.setItem('draw_temp_chosenword', data.word)
+        if (localStorage.draw_extended == "true") {
+            localStorage.setItem('draw_temp_points', points)
+        } else {
+            localStorage.setItem('draw_temp_points', points)
+        }
+        
+        modal.style.display = 'none'
+        init_canvas()
+        canvas.style.display = 'block'
+        canvas.style.border = "3px solid gold"
+        info.innerHTML = "Draw <span style='font-weight:700;'>"+localStorage.draw_temp_chosenword+"</span>"
+    })
 }
 
 function scramble(x) {
