@@ -412,8 +412,9 @@ app.post('/api/game/:game/updatelatest/', async(req,res) => {
     Word.findOne({word:g.latest[0]}, async function(err, docs) {
       if (docs != null && err == null) {
         docs.times_used = parseInt(docs.times_used) + 1
+await docs.save()
       }
-      await docs.save()
+      
     })
 
     res.json({data:g})
