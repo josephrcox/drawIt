@@ -48,9 +48,9 @@ export const historyItemObject = {
         }
         
         if (this.is_custom) {
-            container.innerHTML += "<img src='"+this.img_data+"' style='border:3px solid gold;'>"
+            container.innerHTML += "<img loading='lazy' src='"+this.img_data+"' style='border:3px solid gold;'>"
         } else {
-            container.innerHTML += "<img src='"+this.img_data+"'>"
+            container.innerHTML += "<img loading='lazy' src='"+this.img_data+"'>"
         }
         
         container.innerHTML += "<br/>Comments<br/>"
