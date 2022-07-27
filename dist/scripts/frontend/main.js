@@ -201,8 +201,10 @@ async function loadGames(u) {
         })
 
         addword.addEventListener(touchEvent, async function(e) {
-            if (document.getElementById("currentScore").innerText.split(' ')[0] >= 100) {
+            if (document.getElementById("currentScore").innerText.split(' ')[0] >= 60) {
                 alertModal("Upload a new word to the game", "addword", true)
+            } else {
+                alert("You need at least 60 coins to add a word!")
             }
             let input = document.getElementById("modal_addword_input")
             let submit = document.getElementById("modal_addword_submit")
