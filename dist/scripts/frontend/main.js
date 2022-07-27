@@ -17,7 +17,7 @@ export function sendAnalyticalData(event_name, event_data) {
 
 function init_frontend() {
     console.info("loading frontend")
-    if (localStorage.draw_user == null) {
+    if (localStorage.draw_user == null && window.location.search != "?override=true") {
         alertModal("Login", "login", false)
     } else {
         loadGames(localStorage.draw_user)
