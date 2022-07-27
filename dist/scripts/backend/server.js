@@ -347,6 +347,7 @@ app.get('/api/game/:game/changeturn', async(req,res) => {
       break;
   }
   await g.save()
+console.log("end of change")
   res.json(g)
 })
 
@@ -367,6 +368,7 @@ app.get('/api/game/:game/finishguessing/:attempts/:paidforhint/:superhint/', asy
     
   }
   let custom_word_creator = ""
+console.log(g.latest[3])
   if (g.latest[3] == "true") {
     let w = await Word.findOne({word:g.latest[0]})
     custom_word_creator = w.creator
@@ -394,6 +396,7 @@ app.get('/api/game/:game/finishguessing/:attempts/:paidforhint/:superhint/', asy
     g.latest = []
     await g.save()
   }
+console.log("end of finish")
   res.json(g)
 })
 
