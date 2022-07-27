@@ -146,7 +146,7 @@ export const gameObject = {
                     })
                 }
 
-                if (Math.random() > 0) {
+                if (Math.random() > 0.95) {
                     drawRandomWordFromDB()
                 }
                 
