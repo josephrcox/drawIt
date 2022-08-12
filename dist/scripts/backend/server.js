@@ -178,7 +178,7 @@ app.post('/api/post/addword', async function(req,res) {
 })
 
 app.get('/api/get/randomword', async function(req,res) {
-  let w = await Word.find({approved_by_admin:true})
+  let w = await Word.find({})
   let r = Math.floor(Math.random() * w.length)
   w[r].times_shown = w[r].times_shown + 1
   await w[r].save()
