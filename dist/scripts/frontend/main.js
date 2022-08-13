@@ -59,7 +59,7 @@ async function loadGames(u) {
         let gameid = window.location.pathname.split('/game/')[1]
         let r = await fetch('/api/get/game/'+gameid)
         let g = await r.json()
-        if (g.data != null && g.data.active_game == true) {
+        if (g.data != null && g.data.active_game == true && g.data != []) {
             const go = Object.create(gameObject)
             go.id = g.data._id
             go.latest = g.data.latest
@@ -250,7 +250,7 @@ async function loadGames(u) {
             let r = await fetch('/api/get/game/'+data.current_game_ids[i])
             let g = await r.json()
             console.log(g.data)
-            if (g.data != null) {
+            if (g.data != null && g.data.active_game == true && g.data != []) {
                 const go = Object.create(gameObject)
                 go.id = g.data._id
                 go.latest = g.data.latest

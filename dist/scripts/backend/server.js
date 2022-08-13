@@ -44,7 +44,15 @@ const User = require('../../models/user')
 const Game = require('../../models/game')
 const Word = require('../../models/word')
 
+function cleanUp() {
+  Game.find({active_game:false}, function(err,docs){
+    for (let i = 0; i < docs.length; i++) {
+      console.log(docs[i]._id)
+    }
+  })
+}
 
+cleanUp()
 async function createNotification(username,type,gameid,index, initiator) {
   let g = await Game.findById(gameid)
   User.find({name:username}, async function(err,docs) {
@@ -93,44 +101,6 @@ async function createNotification(username,type,gameid,index, initiator) {
 
 const testingAccountName = ["test", "test2", "undefined", "Chase"]
 
-async function cleanUp() {
-  let x = 0
-  Game.find({}, async function(err,docs) {
-    docs.forEach(async function(doc) {
-      if (doc.active_game == null) {
-        doc.active_game = true
-        await doc.save()
-        x++
-      }
-
-    })
-  })
-  console.log("Cleaned up " + x )
-}
-
-cleanUp()
-
-async function correctHistory() {
-  Game.find({}, async function(err,docs) {
-    for (let i=0;i<docs.length;i++) {
-      for (let j=0;j<docs[i].history.length;j++) {
-          if (docs[i].history[j].player_names == [] ) { 
-            docs[i].history[j].player_names = []
-            docs[i].history[j].player_names.push(docs[i].player_names[0])
-            docs[i].history[j].player_names.push(docs[i].player_names[1])
-
-          }
-          docs[i].history[j].index = j
-
-          docs[i].history[j].gameid = docs[i].id
-        await docs[i].save()
-      }
-    }
-    
-  })
-  // console.log("History corrected")
-}
-
 function uniq_fast(a) {
   var seen = {};
   var out = [];
@@ -147,9 +117,6 @@ function uniq_fast(a) {
 }
 
 // CLEANUP SCRIPS, ONLY RUN WHEN ABSOLUTELY NECESSARY
-
-// cleanUp() 
-// correctHistory()
 
 app.post('/api/post/addword', async function(req,res) {
   let u = await User.findOne({name:req.body.creator})
@@ -454,30 +421,40 @@ app.get('/api/get/user/:user/', async(req,res) => {
 })
 
 app.get('/api/get/game/:game/', async(req,res) => {
-    let g = await Game.findOne({_id:req.params.game, active_game:true})
-    if (g == null) {
-      let u = User.find({}, async function(err,docs) {
-        for (let i=0;i<docs.length;i++) {
-          if (err || docs[i] == null) {
-            // null
-          } else {
-            var index = docs[i].current_game_ids.indexOf(req.params.game);
-            if (index !== -1) {
-              docs[i].current_game_ids.splice(index, 1);
+    let g = await Game.findOne({_id:req.params.game})
+    console.log(g.active_game)
+    if (g.active_game == true) {
+      if (g == null) {
+        let u = User.find({}, async function(err,docs) {
+          for (let i=0;i<docs.length;i++) {
+            if (err || docs[i] == null) {
+              // null
+            } else {
+              var index = docs[i].current_game_ids.indexOf(req.params.game);
+              if (index !== -1) {
+                docs[i].current_game_ids.splice(index, 1);
+              }
+              await docs[i].save()
             }
-            await docs[i].save()
           }
-        }
-        
-
-      })
+          
+  
+        })
+      } else {
+        return res.json({data:g})
+      }
+      res.json({data:[]})
+    } else {
+      res.json({data:[]})
     }
-    res.json({data:g})
+
+    
+    
 
 })
 
 app.get('/api/get/feed/', async(req,res) => {
-  Game.find({}, async function(err,docs) {
+  Game.find({active_game:true}, async function(err,docs) {
     let historyItems = []
     for (let i=0;i<docs.length;i++) {
       if (err || docs[i] == null) {
@@ -498,15 +475,15 @@ app.get('/api/get/feed/', async(req,res) => {
 })
 
 app.get('/api/game/:id/delete', async(req,res) => {
-    Game.findOne({id:req.params.id}, async(err,docs) => {
-      if (docs != null && err == null) {
-        docs.active_game = false
-        await docs.save()
-        res.json({status:'ok', game:docs})
-      } else {
-        res.json({status:'error'})
-      }
-    })
+  let g = await Game.findById(req.params.id)
+
+  if (g != null) {
+    g.active_game = false
+    await g.save()
+    res.json({status:'ok', game:g})
+  } else {
+    res.json({status:'error'})
+  }
 })  
 
 app.get("*", (req,res) => {

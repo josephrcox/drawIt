@@ -45,7 +45,7 @@ export const gameObject = {
                 const data = await response.json() 
                 if (data.status == 'ok') {
                     sendAnalyticalData("game_deleted")
-                    containerwithx.innerHTML = ""
+                    window.location.reload()
                 } else {
                     alert(data)
                 }
