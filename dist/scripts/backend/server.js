@@ -94,16 +94,21 @@ async function createNotification(username,type,gameid,index, initiator) {
 const testingAccountName = ["test", "test2", "undefined", "Chase"]
 
 async function cleanUp() {
-  User.find({}, async function(err,docs) {
-    for (let i =0;i<docs.length;i++) {
-      if (testingAccountName.includes(docs[i].name)) {
-        await User.deleteOne({name:docs[i].name})
-        console.log(docs[i].name + " deleted")
+  let x = 0
+  Game.find({}, async function(err,docs) {
+    docs.forEach(async function(doc) {
+      if (doc.active_game == null) {
+        doc.active_game = true
+        await doc.save()
+        x++
       }
-    }
 
+    })
   })
+  console.log("Cleaned up " + x )
 }
+
+cleanUp()
 
 async function correctHistory() {
   Game.find({}, async function(err,docs) {
@@ -143,7 +148,7 @@ function uniq_fast(a) {
 
 // CLEANUP SCRIPS, ONLY RUN WHEN ABSOLUTELY NECESSARY
 
-cleanUp() 
+// cleanUp() 
 // correctHistory()
 
 app.post('/api/post/addword', async function(req,res) {
@@ -412,7 +417,7 @@ app.post('/api/game/:game/updatelatest/', async(req,res) => {
     Word.findOne({word:g.latest[0]}, async function(err, docs) {
       if (docs != null && err == null) {
         docs.times_used = parseInt(docs.times_used) + 1
-await docs.save()
+        await docs.save()
       }
       
     })
@@ -449,12 +454,12 @@ app.get('/api/get/user/:user/', async(req,res) => {
 })
 
 app.get('/api/get/game/:game/', async(req,res) => {
-    let g = await Game.findById(req.params.game)
+    let g = await Game.findOne({_id:req.params.game, active_game:true})
     if (g == null) {
       let u = User.find({}, async function(err,docs) {
         for (let i=0;i<docs.length;i++) {
           if (err || docs[i] == null) {
-            // console.log(err, docs[i])
+            // null
           } else {
             var index = docs[i].current_game_ids.indexOf(req.params.game);
             if (index !== -1) {
@@ -486,8 +491,6 @@ app.get('/api/get/feed/', async(req,res) => {
         }
       }
     }
-    
-    // console.log(historyItems[0].word)
     historyItems.sort((a, b) => a.createdAt - b.createdAt)
 
     res.json({data:historyItems})
@@ -495,9 +498,15 @@ app.get('/api/get/feed/', async(req,res) => {
 })
 
 app.get('/api/game/:id/delete', async(req,res) => {
-    let g = await Game.findByIdAndDelete(req.params.id)
-    let g2 = await Game.findByIdAndDelete(req.params.id)
-    res.json({status:'ok', game:g2})
+    Game.findOne({id:req.params.id}, async(err,docs) => {
+      if (docs != null && err == null) {
+        docs.active_game = false
+        await docs.save()
+        res.json({status:'ok', game:docs})
+      } else {
+        res.json({status:'error'})
+      }
+    })
 })  
 
 app.get("*", (req,res) => {

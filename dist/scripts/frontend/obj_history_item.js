@@ -21,7 +21,7 @@ export const historyItemObject = {
         container.dataset.gameid = this.gameid
         container.classList.add('history_container')
         if (this.players.length > 0) {
-            container.innerHTML += "<span style='font-size:15px;color:black;font-variant:super;'>"+this.players[0].toUpperCase() +" vs "+ this.players[1].toUpperCase()+"</span><br/>"
+            container.innerHTML += "<span style='font-size:15px;color:black;'>"+this.players[0].toUpperCase() +" vs "+ this.players[1].toUpperCase()+"</span><br/>"
         }
         let color = "red"
         if (this.is_custom) {

@@ -27,6 +27,7 @@ const gameSchema = new mongoose.Schema(
         player_names:{type:Array, required:true},
         whos_turn:{type:Number, required:true, default:0},
         total_turns:{type:Number, required:true, default:0},
+        active_game:{type:Boolean, required:false, default:true},
     },
     { collection: 'games', timestamps:true}
 )

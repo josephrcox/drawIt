@@ -14,7 +14,7 @@ export const gameObject = {
     paid_for_hint:false,
 
     list() {
-        
+        console.log(this)
         localStorage.draw_submitvalidate = "false"
         const home_yourturn_list = document.getElementById('home_yourturn_list')
         const home_waiting_list = document.getElementById('home_waiting_list')
