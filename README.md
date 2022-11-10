@@ -3,7 +3,7 @@
 # What is this?
 Drawing game that I originally created in less than 24 hours. Built using HTML Canvas, Javascript, with MongoDB and NodeJS.
 
-Playable here - https://www.drawit.lol/
+Temporarily unavailable for playing. 
 
 Cloning requires a MongoDB database stored as DATABASE_URL in .env
 
