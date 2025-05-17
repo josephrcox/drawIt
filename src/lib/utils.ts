@@ -63,6 +63,9 @@ export async function submitGuess(
 		currentDrawing.guessed = true;
 		currentDrawing.guessedBy = currentUser.name;
 
+		// Store a reference to the current user before adding coins
+		const currentUserRef = { ...currentUser };
+
 		// Add coins to the user
 		await addcoins(currentUser.name, currentDrawing.coins);
 		await addcoins(currentDrawing.artist, currentDrawing.coins);

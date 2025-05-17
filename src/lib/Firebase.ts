@@ -339,7 +339,19 @@ export async function addcoins(username: string, coins: number) {
 		});
 
 		const updatedUser = { ...user, coins: updatedcoins };
-		currentUser.set(updatedUser);
+
+		// CRITICAL FIX: Only update the currentUser store if this is the ACTUAL logged-in user
+		const currentUserFromStore = get(currentUser);
+		if (currentUserFromStore && currentUserFromStore.name === username) {
+			currentUser.set(updatedUser);
+		}
+
+		// Also update the allUsers store to keep it in sync
+		allUsers.update((users) => ({
+			...users,
+			[username]: updatedUser,
+		}));
+
 		return updatedUser;
 	} catch (error) {
 		console.error('Error adding coins:', error);
@@ -503,17 +515,10 @@ export async function getRecentDrawings(): Promise<Drawing[]> {
 }
 
 /**
- * Middleware wrapper for setDoc that always includes currentUser.name and currentUser.id
+ * Simplified wrapper for setDoc without user information in middleware
  */
 export async function setDocWithMiddleware(ref: any, data: any, options?: any) {
-	const user = get(currentUser);
-	const middlewareData = {
-		...data,
-		_middleware: {
-			domain: window.location.hostname,
-			name: user?.name || null,
-			id: user?.id || null,
-		},
-	};
-	return setDoc(ref, middlewareData, options);
+	// Remove any existing middleware field to prevent using old data
+	const { _middleware, ...cleanData } = data;
+	return setDoc(ref, cleanData, options);
 }

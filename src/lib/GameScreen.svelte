@@ -76,11 +76,11 @@
 		}
 
 		// Then perform the actual backend update
-		submitGuess($currentGame, $currentUser, guessText).catch((error) => {
+		try {
+			await submitGuess($currentGame, $currentUser, guessText);
+		} catch (error) {
 			console.error('Error submitting guess:', error);
-			// Revert to the original state if there's an error
-			// This would require a more complex implementation
-		});
+		}
 	}
 
 	async function handleHint() {
@@ -244,7 +244,7 @@
 		</div>
 	{:else if $currentUser && $currentGame}
 		<div class="flex flex-col items-center gap-6">
-			{#if !drawingDraft}
+			{#if !drawingDraft && $currentUser}
 				<div class="w-full flex flex-col items-center">
 					<h2 class="text-xl font-bold mb-2 text-black">Pick a word to draw</h2>
 					<p
@@ -252,9 +252,14 @@
 					>
 						<span>
 							You get coins as the artist, and <span class="font-bold"
-								>{$currentGame.users.filter(
-									(u) => u !== $currentUser.name,
-								)[0]}</span
+								>{$currentGame &&
+								$currentUser &&
+								$currentUser.name &&
+								$currentGame.users
+									? ($currentGame.users.filter(
+											(u) => u !== ($currentUser?.name || ''),
+										)[0] ?? 'another player')
+									: 'another player'}</span
 							> gets coins for guessing correctly!
 						</span>
 					</p>
@@ -269,7 +274,7 @@
 										: 'btn-primary border-primary text-white'}
 									"
 									on:click={() => {
-										if ($currentGame) {
+										if ($currentGame && $currentUser) {
 											drawingDraft = {
 												secretWord: word.secretWord,
 												coins: word.coins,
@@ -346,7 +351,7 @@
 				<div class="w-full h-screen">
 					<h2 class="text-xl mb-4 text-black/60">
 						Ok, let's draw <span class="font-bold text-black"
-							>{drawingDraft.secretWord.toUpperCase()}</span
+							>{drawingDraft?.secretWord.toUpperCase() ?? ''}</span
 						>
 					</h2>
 					<div class="w-full aspect-square max-w-[min(90vw,400px)] mx-auto">
@@ -363,15 +368,28 @@
 									? 'btn-disabled flex-1'
 									: 'btn btn-secondary flex-1 flex flex-row items-center justify-center text-center border border-secondary'}
 								on:click={async () => {
-									if (drawingDraft && $currentGame && !submittingDraft) {
+									if (
+										drawingDraft &&
+										$currentGame &&
+										$currentUser &&
+										!submittingDraft
+									) {
 										submittingDraft = true;
-										const imageData = canvas.getImageData();
-										const newDrawing = { ...drawingDraft, data: imageData };
-										$currentGame.drawings.push(newDrawing);
-										await updateGame($currentGame);
-										drawingDraft = null;
-										$currentGame = null; // Reset game state to return to homepage
-										submittingDraft = false;
+										try {
+											// Get the drawing data
+											const imageData = canvas.getImageData();
+											const newDrawing = { ...drawingDraft, data: imageData };
+
+											// Update the game
+											$currentGame.drawings.push(newDrawing);
+											await updateGame($currentGame);
+
+											// Reset local state
+											drawingDraft = null;
+											$currentGame = null; // Return to homepage
+										} finally {
+											submittingDraft = false;
+										}
 									}
 								}}
 							>
