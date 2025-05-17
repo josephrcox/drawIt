@@ -71,7 +71,7 @@
 		}
 
 		const queryString = params.toString();
-		const newUrl = queryString ? `?${queryString}` : '/drawIt/';
+		const newUrl = queryString ? `?${queryString}` : '/';
 
 		window.history.pushState({}, '', newUrl);
 		currentPage = page;
