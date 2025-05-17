@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build --watch",
+    "postbuild": "cp CNAME docs/CNAME",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
