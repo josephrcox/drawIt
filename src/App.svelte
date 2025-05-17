@@ -70,7 +70,7 @@
 		}
 
 		const queryString = params.toString();
-		const newUrl = queryString ? `?${queryString}` : '/drawit/';
+		const newUrl = queryString ? `?${queryString}` : '/drawIt/';
 
 		window.history.pushState({}, '', newUrl);
 		currentPage = page;

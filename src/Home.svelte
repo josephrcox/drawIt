@@ -88,13 +88,13 @@
 		<div class="flex flex-col items-center gap-4 w-full max-w-xs mx-auto">
 			<img
 				src={logoUrl}
-				alt="drawit"
+				alt="drawIt"
 				class="w-32 mx-auto mb-6 drop-shadow-md"
 			/>
 			<div class="text-primary text-lg font-semibold">Loading...</div>
 		</div>
 	{:else if $currentUser}
-		<img src={logoUrl} alt="drawit" class="w-32 mx-auto mb-6 drop-shadow-md" />
+		<img src={logoUrl} alt="drawIt" class="w-32 mx-auto mb-6 drop-shadow-md" />
 
 		{#if $currentUserGames.length !== 0}
 			<div class="flex flex-col gap-6 w-full max-w-xs mx-auto">

@@ -11,17 +11,17 @@ export const isDrawing = writable<boolean>(false);
 
 // Initialize from localStorage
 try {
-	const userData = localStorage.getItem('drawit-user');
+	const userData = localStorage.getItem('drawIt-user');
 	if (userData) {
 		currentUser.set(JSON.parse(userData));
 	}
 
-	const gamesData = localStorage.getItem('drawit-games');
+	const gamesData = localStorage.getItem('drawIt-games');
 	if (gamesData) {
 		currentUserGames.set(JSON.parse(gamesData));
 	}
 
-	const usersData = localStorage.getItem('drawit-users');
+	const usersData = localStorage.getItem('drawIt-users');
 	if (usersData) {
 		allUsers.set(JSON.parse(usersData));
 	}
@@ -32,24 +32,24 @@ try {
 // Save to localStorage whenever values change
 currentUser.subscribe((user) => {
 	if (user) {
-		localStorage.setItem('drawit-user', JSON.stringify(user));
+		localStorage.setItem('drawIt-user', JSON.stringify(user));
 	} else {
-		localStorage.removeItem('drawit-user');
+		localStorage.removeItem('drawIt-user');
 	}
 });
 
 currentUserGames.subscribe((games) => {
 	if (games) {
-		localStorage.setItem('drawit-games', JSON.stringify(games));
+		localStorage.setItem('drawIt-games', JSON.stringify(games));
 	} else {
-		localStorage.removeItem('drawit-games');
+		localStorage.removeItem('drawIt-games');
 	}
 });
 
 allUsers.subscribe((users) => {
 	if (Object.keys(users).length > 0) {
-		localStorage.setItem('drawit-users', JSON.stringify(users));
+		localStorage.setItem('drawIt-users', JSON.stringify(users));
 	} else {
-		localStorage.removeItem('drawit-users');
+		localStorage.removeItem('drawIt-users');
 	}
 });
