@@ -55,7 +55,6 @@
 
 		try {
 			await addcoins($currentUser, 5);
-			alert('Added 5 points to current user!');
 		} catch (error) {
 			console.error('Error adding points:', error);
 			alert('Error adding points. Check console for details.');

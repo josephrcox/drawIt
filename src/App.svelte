@@ -12,6 +12,7 @@
 		loadGame,
 	} from './lib/Firebase';
 	import DevMenu from './lib/DevMenu.svelte';
+	import Store from './lib/Store.svelte';
 
 	let currentPage = 'home'; // Default to home page
 	let isLoading = true;
@@ -97,6 +98,8 @@
 				<NewGame {navigate} />
 			{:else if currentPage === 'feed'}
 				<Feed {navigate} />
+			{:else if currentPage === 'store'}
+				<Store {navigate} />
 			{/if}
 		</div>
 		<BottomNav {navigate} />

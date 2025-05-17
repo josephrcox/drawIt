@@ -91,6 +91,23 @@ export async function loadWords(): Promise<Word[]> {
 	return [];
 }
 
+export async function createCustomWord(
+	word: string,
+	createdBy: string,
+): Promise<void> {
+	try {
+		const wordRef = doc(wordCollection);
+		const newWord: Word = {
+			word: word,
+			createdBy,
+			createdAt: new Date(),
+		};
+
+		await setDoc(wordRef, newWord);
+	} catch (error) {
+		console.error('Error creating custom word:', error);
+	}
+}
 /**
  * Create or retrieve a user
  */
