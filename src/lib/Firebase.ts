@@ -31,9 +31,9 @@ import {
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
 	apiKey: 'AIzaSyCTe1si_Cg2Pkl2X77JpscYfW6KajberCM',
-	authDomain: 'drawIt-1f620.firebaseapp.com',
-	projectId: 'drawIt-1f620',
-	storageBucket: 'drawIt-1f620.firebasestorage.app',
+	authDomain: 'drawit-1f620.firebaseapp.com',
+	projectId: 'drawit-1f620',
+	storageBucket: 'drawit-1f620.firebasestorage.app',
 	messagingSenderId: '513679195329',
 	appId: '1:513679195329:web:d650c7307b461788dc6840',
 	measurementId: 'G-P8GR3KFS0H',
