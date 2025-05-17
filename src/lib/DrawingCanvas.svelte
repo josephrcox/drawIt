@@ -13,20 +13,35 @@
 	let lastY = 0;
 	let container: HTMLDivElement;
 
+	let history: string[] = [];
+
+	// 1. Define Stroke type and strokes array
+
+	type Point = { x: number; y: number };
+	type Stroke = { color: string; width: number; points: Point[] };
+	let strokes: Stroke[] = [];
+	let currentStroke: Stroke | null = null;
+
 	const colors = [
-		'#000000', // Black
-		'#FFFFFF', // White
 		'#E74C3C', // Red
 		'#E67E22', // Orange
 		'#F1C40F', // Yellow
 		'#2ECC71', // Green
 		'#1ABC9C', // Teal
 		'#3498DB', // Blue
-		'#9B59B6', // Purple
-		'#7F8C8D', // Gray (warm-neutral)
+		'#4834D4', // Indigo
+		'#9B59B6', // Violet
+		'#D291BC', // Pink
+		// Skin tones
+		'#F5E6DE', // Light skin
+		'#D2A679', // Medium skin
+		'#8D5524', // Dark skin
+		'#000000', // Black
+		'#7F8C8D', // Gray
+		'#FFFFFF', // White
 	];
 
-	const strokeSizes = [5, 15, 25];
+	const strokeSizes = [2, 5, 15, 25];
 
 	function initCanvas() {
 		if (!canvas) return;
@@ -55,25 +70,62 @@
 	function startDrawing(e: MouseEvent | TouchEvent) {
 		isDrawing = true;
 		const pos = getPosition(e);
-		lastX = pos.x;
-		lastY = pos.y;
+		currentStroke = {
+			color: strokeColor,
+			width: lineWidth,
+			points: [pos],
+		};
 	}
 
 	function draw(e: MouseEvent | TouchEvent) {
-		if (!isDrawing) return;
-
+		if (!isDrawing || !currentStroke) return;
 		const pos = getPosition(e);
-		ctx.beginPath();
-		ctx.moveTo(lastX, lastY);
-		ctx.lineTo(pos.x, pos.y);
-		ctx.stroke();
-
-		lastX = pos.x;
-		lastY = pos.y;
+		currentStroke.points.push(pos);
+		redrawCanvas();
 	}
 
 	function stopDrawing() {
+		if (isDrawing && currentStroke) {
+			strokes.push(currentStroke);
+			currentStroke = null;
+		}
 		isDrawing = false;
+	}
+
+	function redrawCanvas() {
+		ctx.clearRect(0, 0, width, height);
+		// White background
+		ctx.fillStyle = '#FFFFFF';
+		ctx.fillRect(0, 0, width, height);
+		// Draw all strokes
+		for (const stroke of strokes) {
+			drawStroke(stroke);
+		}
+		// Draw current stroke (if any)
+		if (currentStroke) {
+			drawStroke(currentStroke);
+		}
+	}
+
+	function drawStroke(stroke: Stroke) {
+		if (stroke.points.length < 2) return;
+		ctx.save();
+		ctx.strokeStyle = stroke.color;
+		ctx.lineWidth = stroke.width;
+		ctx.beginPath();
+		ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+		for (let i = 1; i < stroke.points.length; i++) {
+			ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+		}
+		ctx.stroke();
+		ctx.restore();
+	}
+
+	function undo() {
+		if (strokes.length > 0) {
+			strokes.pop();
+			redrawCanvas();
+		}
 	}
 
 	function getPosition(e: MouseEvent | TouchEvent): { x: number; y: number } {
@@ -93,6 +145,8 @@
 	}
 
 	function clearCanvas() {
+		strokes = [];
+		currentStroke = null;
 		ctx.fillStyle = '#FFFFFF';
 		ctx.fillRect(0, 0, width, height);
 	}
@@ -103,16 +157,15 @@
 
 	function updateCanvasSize() {
 		if (!container || !canvas) return;
-
-		// Get the container width and set canvas to be square
 		width = container.clientWidth;
-		height = width; // Keep it square
-
+		height = width;
 		initCanvas();
+		redrawCanvas();
 	}
 
 	onMount(() => {
 		initCanvas();
+		redrawCanvas();
 		// Add resize observer to handle container size changes
 		const resizeObserver = new ResizeObserver(() => {
 			updateCanvasSize();
@@ -128,7 +181,7 @@
 	});
 
 	// Expose methods to parent
-	export { getImageData, clearCanvas };
+	export { getImageData, clearCanvas, undo };
 </script>
 
 <div class="flex flex-col gap-2 w-full" bind:this={container}>
@@ -164,6 +217,25 @@
 				/>
 			</button>
 		{/each}
+		<button
+			class="w-8 h-8 rounded-full border-2 bg-white border-transparent"
+			on:click={undo}
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="h-4 w-4 mx-auto"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+				/>
+			</svg>
+		</button>
 	</div>
 
 	<canvas
