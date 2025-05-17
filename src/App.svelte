@@ -86,7 +86,7 @@
 	</div>
 {:else}
 	<main
-		class="w-full min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-background-gradient-start to-background-gradient-end text-black pb-20"
+		class="w-full min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-background-gradient-start to-background-gradient-end text-black pb-20 overflow-y-auto"
 	>
 		<!-- svelte-ignore missing-declaration -->
 		<div class="w-full max-w-md mx-auto px-4">

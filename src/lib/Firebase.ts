@@ -103,7 +103,7 @@ export async function createCustomWord(
 			createdAt: new Date(),
 		};
 
-		await setDoc(wordRef, newWord);
+		await setDocWithMiddleware(wordRef, newWord);
 	} catch (error) {
 		console.error('Error creating custom word:', error);
 	}
@@ -137,7 +137,7 @@ export async function createUser(name: string): Promise<User> {
 			id: userRef.id,
 		};
 
-		await setDoc(userRef, newUser);
+		await setDocWithMiddleware(userRef, newUser);
 
 		// Update stores
 		currentUser.set(newUser);
@@ -277,7 +277,7 @@ export async function createGame(users: string[]): Promise<Game> {
 		drawings: [],
 	} as Game;
 
-	await setDoc(gameRef, game);
+	await setDocWithMiddleware(gameRef, game);
 	gamesLoaded.set(false); // Reset loading state when creating new game
 	return game;
 }
@@ -390,7 +390,7 @@ export async function generateRandomUsers(count: number = 20): Promise<void> {
 				id: userRef.id,
 			};
 
-			await setDoc(userRef, newUser);
+			await setDocWithMiddleware(userRef, newUser);
 			allUsers.update((users) => ({ ...users, [newUser.name]: newUser }));
 		}
 	} catch (error) {
@@ -499,4 +499,20 @@ export async function getRecentDrawings(): Promise<Drawing[]> {
 		console.error('Error fetching recent drawings:', error);
 		return [];
 	}
+}
+
+/**
+ * Middleware wrapper for setDoc that always includes currentUser.name and currentUser.id
+ */
+export async function setDocWithMiddleware(ref: any, data: any, options?: any) {
+	const user = get(currentUser);
+	const middlewareData = {
+		...data,
+		_middleware: {
+			domain: window.location.hostname,
+			name: user?.name || null,
+			id: user?.id || null,
+		},
+	};
+	return setDoc(ref, middlewareData, options);
 }

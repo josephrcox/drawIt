@@ -75,12 +75,13 @@
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
-	overflow-y: clip;
 }
 
 body {
 	background-color: #000;
 	color: #fff;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
 }
 
 .modal-backdrop {
