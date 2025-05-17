@@ -35,6 +35,7 @@
 			loading = true;
 			await createUser(name.trim());
 			loading = false;
+			window.location.reload();
 		} else if (name.trim()) {
 			inputError = 'Username can only contain letters and numbers';
 		}
@@ -146,9 +147,8 @@
 			<span class="text-2xl font-bold text-primary">Who are you?</span>
 			<input
 				type="text"
-				placeholder="Enter username"
+				placeholder="Your name"
 				class="input input-bordered w-full bg-white text-black border-primary rounded-xl text-lg px-4 py-2 shadow"
-				autofocus
 				autocapitalize="off"
 				autocorrect="off"
 				maxlength="14"
