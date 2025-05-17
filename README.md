@@ -1,10 +1,1 @@
-# DrawIt
-
-# What is this?
-Drawing game that I originally created in less than 24 hours. Built using HTML Canvas, Javascript, with MongoDB and NodeJS.
-
-Temporarily unavailable for playing. 
-
-Cloning requires a MongoDB database stored as DATABASE_URL in .env
-
-Post-24-hours I have made several improvements to the UX including game history, commenting on games, a live feed, and more! 
+### hello world

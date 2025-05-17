@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Primary fonts that are used immediately - block for small period then swap */
+@font-face {
+	font-family: 'Cinzel';
+	src: url('/fonts/Cinzel-Regular.ttf') format('truetype');
+	font-weight: 400;
+	font-style: normal;
+	font-display: block;
+}
+
+@font-face {
+	font-family: 'Cinzel';
+	src: url('/fonts/Cinzel-Bold.ttf') format('truetype');
+	font-weight: 700;
+	font-style: normal;
+	font-display: block;
+}
+
+/* Secondary fonts that can load with swap strategy */
+@font-face {
+	font-family: 'Cinzel';
+	src: url('/fonts/Cinzel-Medium.ttf') format('truetype');
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Cinzel';
+	src: url('/fonts/Cinzel-SemiBold.ttf') format('truetype');
+	font-weight: 600;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Cinzel';
+	src: url('/fonts/Cinzel-ExtraBold.ttf') format('truetype');
+	font-weight: 800;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Cinzel';
+	src: url('/fonts/Cinzel-Black.ttf') format('truetype');
+	font-weight: 900;
+	font-style: normal;
+	font-display: swap;
+}
+
+.card-font {
+	font-family: 'Cinzel', serif;
+	font-optical-sizing: auto;
+	font-weight: 400;
+	font-style: normal;
+}
+
+.card-font-bold {
+	font-family: 'Cinzel', serif;
+	font-optical-sizing: auto;
+	font-weight: 700;
+	font-style: normal;
+}
+
+:root {
+	line-height: 1.2;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	/* no select */
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	overflow-y: clip;
+}
+
+body {
+	background-color: #000;
+	color: #fff;
+}
+
+.modal-backdrop {
+	background-color: rgba(0, 0, 0, 0);
+	opacity: 0;
+}
+
+input[type='color'] {
+	border-radius: 0px;
+	padding: 0;
+}
+
+input[type='color']::-moz-color-swatch {
+	border: none;
+}
+
+input[type='color']::-webkit-color-swatch-wrapper {
+	padding: 0;
+	border-radius: 0;
+}
+
+input[type='color']::-webkit-color-swatch {
+	border: none;
+}
