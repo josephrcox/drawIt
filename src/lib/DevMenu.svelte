@@ -34,9 +34,9 @@
 			await batch.commit();
 
 			// Clear local storage
-			localStorage.removeItem('drawIt-user');
-			localStorage.removeItem('drawIt-games');
-			localStorage.removeItem('drawIt-users');
+			localStorage.removeItem('drawIt-user-v2');
+			localStorage.removeItem('drawIt-games-v2');
+			localStorage.removeItem('drawIt-users-v2');
 
 			// Clear current user from store
 			currentUser.set(null);

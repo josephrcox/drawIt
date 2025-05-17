@@ -429,9 +429,9 @@ export async function validateUserSession(): Promise<boolean> {
 		if (!userDoc) {
 			// User doesn't exist in Firestore, clear local data
 			currentUser.set(null);
-			localStorage.removeItem('drawIt-user');
-			localStorage.removeItem('drawIt-games');
-			localStorage.removeItem('drawIt-users');
+			localStorage.removeItem('drawIt-user-v2');
+			localStorage.removeItem('drawIt-games-v2');
+			localStorage.removeItem('drawIt-users-v2');
 			return false;
 		}
 
