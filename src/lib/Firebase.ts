@@ -15,7 +15,7 @@ import {
 	Timestamp,
 } from 'firebase/firestore';
 import { get } from 'svelte/store';
-import type { Game, Drawing, User } from '../types';
+import type { Game, Drawing, User, Word } from '../types';
 import {
 	currentUser,
 	currentUserGames,
@@ -49,6 +49,7 @@ export const fireStore = getFirestore(app);
 export const gameCollection = collection(fireStore, 'games');
 export const userCollection = collection(fireStore, 'users');
 export const drawingCollection = collection(fireStore, 'drawings');
+export const wordCollection = collection(fireStore, 'words');
 
 /**
  * Load specific users into the store
@@ -77,6 +78,17 @@ export async function loadUsers(userNames: string[]): Promise<void> {
 	} catch (error) {
 		console.error('Error loading users:', error);
 	}
+}
+
+export async function loadWords(): Promise<Word[]> {
+	try {
+		const wordSnapshot = await getDocs(wordCollection);
+		const words = wordSnapshot.docs.map((doc) => doc.data() as Word);
+		return words;
+	} catch (error) {
+		console.error('Error loading words:', error);
+	}
+	return [];
 }
 
 /**

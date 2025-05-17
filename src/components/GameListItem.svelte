@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { allUsers, currentGame } from '../store';
 	import type { Game } from '../types';
-	import Userrow from './Userrow.svelte';
+	// @ts-ignore
+	import Userrow from './UserRow.svelte';
 
 	export let game: Game | null = null;
 	export let currentUserName: string = '';

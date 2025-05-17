@@ -94,9 +94,9 @@
 			{:else if currentPage === 'home'}
 				<Home {navigate} />
 			{:else if currentPage === 'new'}
-				<NewGame />
+				<NewGame {navigate} />
 			{:else if currentPage === 'feed'}
-				<Feed />
+				<Feed {navigate} />
 			{/if}
 		</div>
 		<BottomNav {navigate} />

@@ -19,7 +19,7 @@
 	} from './lib/Firebase';
 	import { getGameState } from './lib/utils';
 	import GameSection from './components/GameSection.svelte';
-	import logoUrl from './assets/logo.svg';
+	import Logo from './components/Logo.svelte';
 
 	let loading = true;
 	let userName: string | null = null;
@@ -85,7 +85,7 @@
 </script>
 
 <div class="min-h-[80vh] flex flex-col items-center justify-center px-2 py-6">
-	<img src={logoUrl} alt="drawIt" class="w-32 mx-auto mb-6 drop-shadow-md" />
+	<Logo {navigate} />
 	{#if loading || ($currentUser && !$gamesLoaded)}
 		<div class="flex flex-col items-center gap-4 w-full max-w-xs mx-auto">
 			<div class="text-primary text-lg font-semibold">Loading...</div>

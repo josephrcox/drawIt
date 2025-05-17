@@ -246,11 +246,9 @@
 		<div class="flex flex-col items-center gap-6">
 			{#if !drawingDraft}
 				<div class="w-full flex flex-col items-center">
-					<h2 class="text-xl font-bold mb-2 text-primary">
-						Pick a word to draw
-					</h2>
+					<h2 class="text-xl font-bold mb-2 text-black">Pick a word to draw</h2>
 					<p
-						class="mb-6 text-accent italic tooltip flex flex-row gap-2 text-xs"
+						class="mb-6 text-black/60 italic tooltip flex flex-row gap-2 text-xs"
 					>
 						<span>
 							You get coins as the artist, and <span class="font-bold"
@@ -260,11 +258,16 @@
 							> gets coins for guessing correctly!
 						</span>
 					</p>
-					<div class="flex flex-col gap-4">
+					<div class="flex flex-col gap-4 w-full">
 						{#await wordsPromise then words}
 							{#each words as word}
 								<button
-									class="btn btn-secondary flex flex-row items-center justify-between w-72 border border-secondary"
+									class="btn flex flex-row items-center justify-between w-full border
+									
+									{word.createdBy != null
+										? 'btn-secondary border-black text-white h-20'
+										: 'btn-primary border-primary text-white'}
+									"
 									on:click={() => {
 										if ($currentGame) {
 											drawingDraft = {
@@ -282,17 +285,25 @@
 										}
 									}}
 								>
-									{word.secretWord.toUpperCase()}
+									<div class="flex flex-col items-start gap-1">
+										<span class="text-sm font-semibold">
+											{word.secretWord.toUpperCase()}
+										</span>
+
+										<span class="text-[0.8rem] text-white opacity-80">
+											{word.createdBy ? 'by ' + word.createdBy : ''}
+										</span>
+									</div>
 									<!-- a star emoji for each point number -->
 									<span class="flex items-center gap-1">
 										{#each Array(word.coins) as _}
-											<img src={coinGif} class="w-4 h-4" />
+											<img src={coinPng} class="w-4 h-4" />
 										{/each}
 									</span>
 								</button>
 							{/each}
 							<button
-								class="btn btn-outline w-72 flex flex-row items-center justify-center gap-2
+								class="btn btn-outline w-fit flex flex-row items-center justify-center gap-2
                                 
                                 {!$currentUser ||
 								$currentUser.coins < 5 ||
@@ -324,7 +335,7 @@
 								<span>{isRefreshing ? 'Refreshing...' : 'Refresh Words'}</span>
 								{#if !isRefreshing}
 									<span class="text-xs text-black/60"
-										>(5 <img src={coinGif} class="w-4 h-4 inline" />)</span
+										>(5 <img src={coinPng} class="w-4 h-4 inline" />)</span
 									>
 								{/if}
 							</button>

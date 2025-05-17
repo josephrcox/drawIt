@@ -1,5 +1,5 @@
 import type { Drawing, Game, User, WordOptions } from '../types';
-import { addcoins, updateGame, getUser } from './Firebase';
+import { addcoins, updateGame, getUser, loadWords } from './Firebase';
 import { showSuccessToast } from './notifications';
 import { words } from './words';
 
@@ -85,12 +85,33 @@ export async function submitGuess(
  * Get random words for drawing options
  */
 export async function getRandomWords(count: number): Promise<WordOptions[]> {
+	const wordList: WordOptions[] = [];
+
+	for (const word of words) {
+		wordList.push({
+			secretWord: word,
+			coins: 0,
+		});
+	}
+
+	let customWords = await loadWords();
+	wordList.push(
+		...customWords.map((word) => ({
+			secretWord: word.word,
+			coins: 0,
+			createdBy: word.createdBy,
+			createdAt: word.createdAt,
+		})),
+	);
+
 	// Return random unique words with coins based on index
-	const randomWords = words.sort(() => Math.random() - 0.5).slice(0, count);
-	return randomWords.map((word, index) => ({
-		secretWord: word,
-		coins: index + 1,
-	}));
+	const randomWords = wordList.sort(() => Math.random() - 0.5).slice(0, count);
+	// Make it so the coins are based on the index
+	for (let i = 0; i < randomWords.length; i++) {
+		randomWords[i].coins = i + 1;
+	}
+
+	return randomWords;
 }
 
 /**

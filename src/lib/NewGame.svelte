@@ -3,12 +3,14 @@
 	import { createGame, getUsers } from './Firebase';
 	import type { User } from '../types';
 	import Userrow from '../components/Userrow.svelte';
+	import Logo from '../components/Logo.svelte';
 
 	let userSearchQuery: string = '';
 	let startNewGameUsers: User[] = [];
 	let searchTimeout: ReturnType<typeof setTimeout>;
 	let isLoading = true;
 	let isCreatingGame = false;
+	export let navigate: ((page: string) => void) | undefined;
 
 	function searchUsers() {
 		clearTimeout(searchTimeout);
@@ -43,6 +45,7 @@
 
 <div class="flex flex-col gap-4 p-4 pt-24">
 	<div class="flex flex-col gap-2">
+		<Logo {navigate} />
 		<h2 class="text-xl font-bold text-primary">Challenge a friend</h2>
 		<p class="text-sm text-black/60">Tap on a user to start a new game</p>
 	</div>

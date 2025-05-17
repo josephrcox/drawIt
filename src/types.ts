@@ -34,4 +34,12 @@ export type Game = {
 export type WordOptions = {
 	secretWord: string;
 	coins: number;
+	createdBy?: string; // user name
+	createdAt?: Date;
+};
+
+export type Word = {
+	word: string;
+	createdBy?: string; // user name
+	createdAt?: Date;
 };
