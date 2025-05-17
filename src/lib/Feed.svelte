@@ -4,6 +4,7 @@
 	import type { Drawing } from '../types';
 	import { getHint, getSuperHint } from './utils';
 	import coinPng from '../assets/coin.png';
+	import logoUrl from '../assets/logo.svg';
 
 	let drawings: Drawing[] = [];
 	let loading = true;
@@ -17,6 +18,7 @@
 </script>
 
 <div class="p-4">
+	<img src={logoUrl} alt="drawIt" class="w-32 mx-auto mb-6 drop-shadow-md" />
 	{#if loading}
 		<div class="flex justify-center items-center h-40">
 			<span class="text-accent">Loading drawings...</span>
