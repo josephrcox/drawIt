@@ -33,7 +33,7 @@
 		if (!isValid || !user) return;
 		let sanitized = sanitize(customWordDraft);
 		sanitized = sanitized.trim();
-		await addcoins(user, -50);
+		await addcoins(user.name, -50);
 		await createCustomWord(sanitized, user.name);
 		showSuccessToast('Custom word added!');
 		customWordDraft = '';

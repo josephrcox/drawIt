@@ -100,7 +100,7 @@
 			$currentUser,
 		);
 		if (success) {
-			await addcoins($currentUser, -5);
+			await addcoins($currentUser.name, -5);
 		}
 		purchasingHint = false;
 	}
@@ -122,7 +122,7 @@
 			$currentUser,
 		);
 		if (success) {
-			await addcoins($currentUser, -10);
+			await addcoins($currentUser.name, -10);
 		}
 		purchasingSuperHint = false;
 	}
@@ -319,7 +319,7 @@
 									) {
 										isRefreshing = true;
 										try {
-											await addcoins($currentUser, -5);
+											await addcoins($currentUser.name, -5);
 											// Force a re-render of the word list by incrementing the trigger
 											refreshTrigger++;
 											wordsPromise = getRandomWords(4);

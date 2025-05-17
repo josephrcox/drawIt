@@ -64,11 +64,12 @@ export async function submitGuess(
 		currentDrawing.guessedBy = currentUser.name;
 
 		// Add coins to the user
-		await addcoins(currentUser, currentDrawing.coins);
+		await addcoins(currentUser.name, currentDrawing.coins);
+		await addcoins(currentDrawing.artist, currentDrawing.coins);
 
 		// Show success toast
 		showSuccessToast(
-			`It was ${currentDrawing.secretWord}! You got ${currentDrawing.coins} coins!`,
+			`It was ${currentDrawing.secretWord}! You both get ${currentDrawing.coins} coins!`,
 		);
 	} else if (!currentDrawing.guesses.includes(guess)) {
 		// Add to the guesses only if it's a new guess

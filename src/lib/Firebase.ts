@@ -323,8 +323,9 @@ export async function updateUser(user: User) {
 	return user;
 }
 
-export async function addcoins(user: User, coins: number) {
-	if (!user.id) {
+export async function addcoins(username: string, coins: number) {
+	const user = await getUser(username);
+	if (!user) {
 		console.error('Cannot add coins to user without ID');
 		return user;
 	}

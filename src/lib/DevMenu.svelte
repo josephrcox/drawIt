@@ -54,7 +54,7 @@
 		if (!$currentUser) return;
 
 		try {
-			await addcoins($currentUser, 5);
+			await addcoins($currentUser.name, 5);
 		} catch (error) {
 			console.error('Error adding points:', error);
 			alert('Error adding points. Check console for details.');
