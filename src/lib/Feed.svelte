@@ -3,6 +3,7 @@
 	import { getRecentDrawings } from './Firebase';
 	import type { Drawing } from '../types';
 	import { getHint, getSuperHint } from './utils';
+	import coinPng from '../assets/coin.png';
 
 	let drawings: Drawing[] = [];
 	let loading = true;
@@ -29,7 +30,7 @@
 					>
 						<div class="flex flex-row gap-1 absolute top-2 right-2">
 							{#each Array(drawing.coins) as _}
-								<img src="/drawit/public/coin.png" class="w-4 h-4" />
+								<img src={coinPng} class="w-4 h-4" />
 							{/each}
 						</div>
 						<img

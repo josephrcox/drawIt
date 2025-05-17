@@ -14,6 +14,8 @@
 	} from './utils';
 	import DrawingCanvas from './DrawingCanvas.svelte';
 	import { updateGame, addcoins } from './Firebase';
+	import coinGif from '../assets/coin.gif';
+	import coinPng from '../assets/coin.png';
 
 	let currentDrawing: Drawing | null = null;
 	let guess: string = '';
@@ -198,7 +200,7 @@
 								disabled={$currentUser.coins < 5 || purchasingHint}
 							>
 								{purchasingHint ? 'Purchasing...' : 'Hint (5 '}<img
-									src="/drawit/public/coin.png"
+									src={coinPng}
 									class="w-4 h-4 inline"
 								/>{purchasingHint ? '' : ')'}
 							</button>
@@ -212,7 +214,7 @@
 								disabled={$currentUser.coins < 10 || purchasingSuperHint}
 							>
 								{purchasingSuperHint ? 'Purchasing...' : 'Super Hint (10 '}<img
-									src="/drawit/public/coin.png"
+									src={coinPng}
 									class="w-4 h-4 inline"
 								/>{purchasingSuperHint ? '' : ')'}
 							</button>
@@ -284,7 +286,7 @@
 									<!-- a star emoji for each point number -->
 									<span class="flex items-center gap-1">
 										{#each Array(word.coins) as _}
-											<img src="/drawit/public/coin.gif" class="w-4 h-4" />
+											<img src={coinGif} class="w-4 h-4" />
 										{/each}
 									</span>
 								</button>
@@ -322,10 +324,7 @@
 								<span>{isRefreshing ? 'Refreshing...' : 'Refresh Words'}</span>
 								{#if !isRefreshing}
 									<span class="text-xs text-black/60"
-										>(5 <img
-											src="/drawit/public/coin.gif"
-											class="w-4 h-4 inline"
-										/>)</span
+										>(5 <img src={coinGif} class="w-4 h-4 inline" />)</span
 									>
 								{/if}
 							</button>

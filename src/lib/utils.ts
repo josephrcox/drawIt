@@ -17,12 +17,12 @@ export function isUsersTurn(game: Game, user: string): boolean {
 	return false;
 }
 
-export async function getUserSpan(name: string): Promise<string> {
-	// Returns the name of the user and how many coins they have like this "Joseph (100 {coin.jpg}" but in an html span element
+export async function getUserSpan(
+	name: string,
+): Promise<{ name: string; coins: number | null }> {
 	const userData = await getUser(name);
-	if (!userData) return `<span class="font-bold text-black">${name}</span>`;
-
-	return `<span class="font-bold text-black">${name} (${userData.coins} <img src="/coin.gif" class="w-4 h-4 inline" alt="coin" />)</span>`;
+	if (!userData) return { name, coins: null };
+	return { name: userData.name, coins: userData.coins };
 }
 
 /**

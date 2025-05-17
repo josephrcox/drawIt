@@ -4,6 +4,7 @@
 	export let showAvatar: boolean = false;
 	export let subtitle: string | null = null;
 	export let onClick: (() => void) | null = null;
+	import coinPng from '../assets/coin.png';
 </script>
 
 <button
@@ -26,7 +27,7 @@
 			<div class="flex items-center gap-1 text-sm text-black/60">
 				{#if coins !== null}
 					<span>{coins}</span>
-					<img src="/drawit/public/coin.png" class="w-4 h-4" alt="coins" />
+					<img src={coinPng} class="w-4 h-4" alt="coins" />
 				{/if}
 				{#if subtitle}
 					· <span class="text-xs text-black/60">{subtitle}</span>

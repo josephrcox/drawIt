@@ -17,7 +17,7 @@
 	let isLoading = true;
 
 	onMount(async () => {
-		// Validate user session first
+		// Validate user session first //
 		await validateUserSession();
 
 		// Get initial page and game from URL

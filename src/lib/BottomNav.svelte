@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { currentUser, currentGame, isDrawing } from '../store';
+	import coinGif from '../assets/coin.gif';
 
 	export let navigate: (page: string) => void;
 	let currentPage = 'home';
@@ -31,7 +32,7 @@
 			<!-- coins -->
 			<div class="flex flex-col items-center">
 				<div class="flex items-center gap-1">
-					<img src="/drawit/public/coin.gif" class="w-5 h-5" alt="coins" />
+					<img src={coinGif} class="w-5 h-5" alt="coins" />
 					<span class="text-sm font-medium">{$currentUser?.coins || 0}</span>
 				</div>
 				<span class="text-xs text-gray-500">coins</span>
