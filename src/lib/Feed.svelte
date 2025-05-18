@@ -163,11 +163,11 @@
 			]);
 
 			// Constants for styling
-			const PADDING = 40;
+			const PADDING = 20;
 			const BORDER_WIDTH = 4;
 			const BORDER_COLOR = '#a78bfa';
 			const BG_COLOR = '#ffffff';
-			const LOGO_WIDTH = 72;
+			const LOGO_WIDTH = 120;
 			const TEXT_COLOR = '#000000';
 			const PRIMARY_COLOR = '#6419e6';
 			const SECONDARY_COLOR = '#d926a9';
@@ -208,7 +208,7 @@
 
 			// Draw drawing image in the center of the top area
 			const imageX = PADDING + BORDER_WIDTH;
-			const imageY = PADDING + BORDER_WIDTH;
+			const imageY = PADDING + BORDER_WIDTH + 30;
 			ctx.drawImage(drawingImage, imageX, imageY, contentWidth, contentHeight);
 
 			// Draw coins
@@ -271,7 +271,7 @@
 			ctx.fillText(artistText, canvas.width / 2 + wordWidth / 2, textY);
 
 			// Draw guesses info - handle long text with wrapping
-			ctx.font = '20px Outfit, sans-serif';
+			ctx.font = '16px Outfit, sans-serif';
 			ctx.fillStyle = TEXT_COLOR;
 			let guessText = '';
 			if (drawing.guesses && drawing.guesses.length > 0) {
@@ -282,7 +282,7 @@
 
 			// Text wrapping for guesses
 			const maxWidth = canvas.width - 80;
-			wrapText(ctx, guessText, canvas.width / 2, textY + 40, maxWidth, 25);
+			wrapText(ctx, guessText, canvas.width / 2, textY + 30, maxWidth, 25);
 
 			// Draw hints info if applicable
 			if (drawing.hintPurchased) {
@@ -290,11 +290,18 @@
 				ctx.font = '18px Outfit, sans-serif';
 				const hintText = `${drawing.guessedBy} used a Hint${drawing.superHintPurchased ? '... AND a SuperHint!' : ''}`;
 				// Position below the wrapped guess text
-				ctx.fillText(hintText, canvas.width / 2, textY + 90);
+				ctx.fillText(hintText, canvas.width / 2, textY + 50);
 			}
 
 			// Draw logo in the bottom right corner
 			const logoHeight = (logoImage.height / logoImage.width) * LOGO_WIDTH;
+			ctx.fillStyle = 'white';
+			ctx.fillRect(
+				canvas.width - LOGO_WIDTH - 15,
+				canvas.height - logoHeight - 15,
+				LOGO_WIDTH,
+				logoHeight,
+			);
 			ctx.drawImage(
 				logoImage,
 				canvas.width - LOGO_WIDTH - 15,
@@ -302,6 +309,7 @@
 				LOGO_WIDTH,
 				logoHeight,
 			);
+			// give the logo a white background
 
 			// Add DrawIt URL at very bottom, centered
 			ctx.font = '16px Outfit, sans-serif';
