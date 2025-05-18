@@ -199,6 +199,7 @@
 								on:click={handleHint}
 								disabled={$currentUser.coins < 5 || purchasingHint}
 							>
+								<!-- svelte-ignore a11y-missing-attribute -->
 								{purchasingHint ? 'Purchasing...' : 'Hint (5 '}<img
 									src={coinPng}
 									class="w-4 h-4 inline"
@@ -286,6 +287,8 @@
 												guessedBy: '',
 												hintPurchased: false,
 												superHintPurchased: false,
+												comments: [],
+												likes: [],
 											};
 										}
 									}}

@@ -60,7 +60,7 @@
 				<input
 					type="text"
 					placeholder="Enter custom word"
-					class="input input-bordered w-full max-w-xs"
+					class="input input-bordered w-full max-w-xs text-black bg-white"
 					maxlength="15"
 					minlength="3"
 					bind:value={customWordDraft}
@@ -72,7 +72,7 @@
 					}}
 				/>
 				<button
-					class="btn btn-primary"
+					class="btn btn-primary {isValid ? '' : 'opacity-50'}"
 					on:click={addCustomWord}
 					disabled={!isValid}
 				>

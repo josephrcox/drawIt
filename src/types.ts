@@ -22,6 +22,15 @@ export type Drawing = {
 	guessedBy: string; // Player.name
 	hintPurchased: boolean;
 	superHintPurchased: boolean;
+	comments: Comment[];
+	likes: string[]; // Player.name
+	gameId?: string;
+	index?: number;
+};
+
+export type Comment = {
+	content: string;
+	createdBy: string;
 };
 
 export type Game = {

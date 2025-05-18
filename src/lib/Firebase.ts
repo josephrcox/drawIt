@@ -13,6 +13,8 @@ import {
 	where,
 	serverTimestamp,
 	Timestamp,
+	writeBatch,
+	arrayUnion,
 } from 'firebase/firestore';
 import { get } from 'svelte/store';
 import type { Game, Drawing, User, Word } from '../types';
@@ -78,6 +80,32 @@ export async function loadUsers(userNames: string[]): Promise<void> {
 	} catch (error) {
 		console.error('Error loading users:', error);
 	}
+}
+
+export async function addComment(
+	gameId: string,
+	drawingIndex: number,
+	comment: string,
+	user: string,
+): Promise<Drawing> {
+	const gameRef = doc(gameCollection, gameId);
+	const game = await getDoc(gameRef);
+	const gameData = game.data() as Game;
+
+	gameData.drawings[drawingIndex].comments.push({
+		content: comment,
+		createdBy: user,
+	});
+
+	await updateDoc(gameRef, {
+		drawings: gameData.drawings,
+	});
+
+	return gameData.drawings[drawingIndex];
+
+	// await updateDoc(drawingRef, {
+	// 	comments: arrayUnion(comment),
+	// });
 }
 
 export async function loadWords(): Promise<Word[]> {
@@ -360,6 +388,92 @@ export async function addcoins(username: string, coins: number) {
 }
 
 /**
+ * Add or remove a like from a drawing
+ */
+export async function likeDrawing(
+	gameId: string,
+	drawingIndex: number,
+	userName: string,
+): Promise<boolean> {
+	try {
+		console.log(
+			`likeDrawing called with gameId: ${gameId}, drawingIndex: ${drawingIndex}, userName: ${userName}`,
+		);
+
+		if (!gameId || drawingIndex === undefined) {
+			console.error('Invalid gameId or drawingIndex', { gameId, drawingIndex });
+			return false;
+		}
+
+		const gameRef = doc(gameCollection, gameId);
+		console.log(`Getting game ref for ${gameId}`);
+		const game = await getDoc(gameRef);
+
+		if (!game.exists()) {
+			console.error('Game not found');
+			return false;
+		}
+
+		const gameData = game.data() as Game;
+		console.log(`Game data retrieved:`, gameData);
+
+		if (!gameData.drawings || !Array.isArray(gameData.drawings)) {
+			console.error('Game has no drawings array', gameData);
+			return false;
+		}
+
+		if (drawingIndex >= gameData.drawings.length) {
+			console.error(
+				`Drawing index out of bounds: ${drawingIndex}, max: ${
+					gameData.drawings.length - 1
+				}`,
+			);
+			return false;
+		}
+
+		const drawing = gameData.drawings[drawingIndex];
+
+		if (!drawing) {
+			console.error('Drawing not found');
+			return false;
+		}
+
+		// Initialize likes array if it doesn't exist
+		if (!drawing.likes) {
+			drawing.likes = [];
+		}
+
+		console.log(`Current likes:`, drawing.likes);
+
+		// Toggle like: remove if already liked, add if not
+		const userLikedIndex = drawing.likes.indexOf(userName);
+		if (userLikedIndex >= 0) {
+			// Remove like
+			console.log(`Removing like from ${userName}`);
+			drawing.likes.splice(userLikedIndex, 1);
+		} else {
+			// Add like
+			console.log(`Adding like from ${userName}`);
+			drawing.likes.push(userName);
+		}
+
+		console.log(`Updated likes:`, drawing.likes);
+
+		// Update the game document
+		console.log(`Updating game document`);
+		await updateDoc(gameRef, {
+			drawings: gameData.drawings,
+		});
+
+		console.log(`Like operation successful`);
+		return true;
+	} catch (error) {
+		console.error('Error liking drawing:', error);
+		return false;
+	}
+}
+
+/**
  * Generate random users for testing
  */
 export async function generateRandomUsers(count: number = 20): Promise<void> {
@@ -477,9 +591,10 @@ export async function getRecentDrawings(): Promise<Drawing[]> {
 			const game = doc.data() as Game;
 			if (game.drawings && game.drawings.length > 0) {
 				// Add game ID to each drawing for reference
-				const drawingsWithGameId = game.drawings.map((drawing) => ({
+				const drawingsWithGameId = game.drawings.map((drawing, index) => ({
 					...drawing,
 					gameId: doc.id,
+					index: index,
 				}));
 
 				for (const drawing of drawingsWithGameId) {

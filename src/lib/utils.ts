@@ -133,6 +133,8 @@ export function selectWord(game: Game, currentUser: string, word: WordOptions) {
 		guessedBy: '',
 		hintPurchased: false,
 		superHintPurchased: false,
+		comments: [],
+		likes: [],
 	};
 
 	game.drawings.push(newDrawing);
