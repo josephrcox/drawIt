@@ -10,6 +10,7 @@
 		generateRandomUsers,
 		validateUserSession,
 		loadGame,
+		deleteOrphanedGames,
 	} from './lib/Firebase';
 	import DevMenu from './lib/DevMenu.svelte';
 	import Store from './lib/Store.svelte';
@@ -18,6 +19,8 @@
 	let isLoading = true;
 
 	onMount(async () => {
+		// const deletedCount = await deleteOrphanedGames();
+		// console.log(`Cleaned up ${deletedCount} orphaned games`);
 		// Validate user session first //
 		await validateUserSession();
 

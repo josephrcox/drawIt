@@ -637,3 +637,51 @@ export async function setDocWithMiddleware(ref: any, data: any, options?: any) {
 	const { _middleware, ...cleanData } = data;
 	return setDoc(ref, cleanData, options);
 }
+
+/**
+ * Delete all games that have users that don't exist in the user collection
+ * Returns the number of deleted games
+ */
+export async function deleteOrphanedGames(): Promise<number> {
+	try {
+		// Get all users first
+		const userSnapshot = await getDocs(userCollection);
+		const existingUsers = new Set(
+			userSnapshot.docs.map((doc) => doc.data().name),
+		);
+
+		// Get all games
+		const gamesSnapshot = await getDocs(gameCollection);
+		const batch = writeBatch(fireStore);
+		let deletedCount = 0;
+
+		// Check each game
+		gamesSnapshot.docs.forEach((gameDoc) => {
+			const game = gameDoc.data() as Game;
+
+			// Check if all users in the game exist
+			const hasOrphanedUsers = game.users.some(
+				(user) => !existingUsers.has(user),
+			);
+
+			if (hasOrphanedUsers) {
+				batch.delete(doc(gameCollection, gameDoc.id));
+				deletedCount++;
+			}
+		});
+
+		// Execute the batch delete
+		if (deletedCount > 0) {
+			await batch.commit();
+			console.log(`Deleted ${deletedCount} orphaned games`);
+
+			// Reset games loaded state to trigger refresh
+			gamesLoaded.set(false);
+		}
+
+		return deletedCount;
+	} catch (error) {
+		console.error('Error deleting orphaned games:', error);
+		return 0;
+	}
+}
