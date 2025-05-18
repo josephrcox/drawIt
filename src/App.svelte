@@ -4,7 +4,7 @@
 	import GameScreen from './lib/GameScreen.svelte';
 	import NewGame from './lib/NewGame.svelte';
 	import Feed from './lib/Feed.svelte';
-	import { currentGame } from './store';
+	import { currentGame, currentUser } from './store';
 	import BottomNav from './lib/BottomNav.svelte';
 	import {
 		generateRandomUsers,
@@ -87,6 +87,8 @@
 			class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"
 		></div>
 	</div>
+{:else if !$currentUser}
+	<Home {navigate} />
 {:else}
 	<main
 		class="w-full min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-background-gradient-start to-background-gradient-end text-black pb-20 overflow-y-auto"

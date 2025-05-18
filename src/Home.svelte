@@ -84,7 +84,9 @@
 	});
 </script>
 
-<div class="min-h-[80vh] flex flex-col items-center justify-center px-2 py-6">
+<div
+	class="w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background-gradient-start to-background-gradient-end text-black"
+>
 	<Logo {navigate} />
 	{#if loading || ($currentUser && !$gamesLoaded)}
 		<div class="flex flex-col items-center gap-4 w-full max-w-xs mx-auto">

@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { currentUser } from '../store';
+	import {
+		currentUser,
+		currentUserGames,
+		currentGame,
+		allUsers,
+		gamesLoaded,
+	} from '../store';
 	import coinGif from '../assets/coin.gif';
 	import Logo from '../components/Logo.svelte';
 	import { addcoins, createCustomWord } from './Firebase';
@@ -37,6 +43,21 @@
 		await createCustomWord(sanitized, user.name);
 		showSuccessToast('Custom word added!');
 		customWordDraft = '';
+	}
+
+	function logout() {
+		// Clear all stores
+		currentUser.set(null);
+		currentUserGames.set([]);
+		currentGame.set(null);
+		allUsers.set({});
+		gamesLoaded.set(false);
+
+		// Clear localStorage
+		localStorage.clear();
+
+		// Refresh the window
+		window.location.reload();
 	}
 </script>
 
@@ -79,6 +100,10 @@
 					Submit
 				</button>
 			</div>
+		</div>
+
+		<div class="mt-8">
+			<button class="btn btn-error" on:click={logout}> Logout </button>
 		</div>
 	</div>
 </div>
