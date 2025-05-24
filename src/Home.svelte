@@ -9,6 +9,7 @@
 		allUsers,
 		gamesLoaded,
 		allGames,
+		authUser,
 	} from './store';
 	import {
 		createGame,
@@ -20,6 +21,7 @@
 		checkDailyReward,
 		deleteGame,
 		initializeUserSession,
+		initializeAuth,
 	} from './lib/Firebase';
 	import { getGameState } from './lib/utils';
 	import GameSection from './components/GameSection.svelte';
@@ -83,6 +85,12 @@
 	onMount(async () => {
 		loading = true;
 		$gamesLoaded = false;
+
+		// Initialize authentication first
+		if (!$authUser) {
+			await initializeAuth();
+		}
+
 		await initializeUserSession();
 		loading = false;
 	});

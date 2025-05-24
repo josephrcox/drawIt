@@ -16,15 +16,31 @@
 
 	let customWordDraft = '';
 
-	// Only allow a-z, A-Z, 0-9, and spaces
+	// Only allow a-z and A-Z
 	function sanitize(input: string): string {
-		return input.replace(/[^a-zA-Z0-9 ]/g, '');
+		return input.replace(/[^a-zA-Z]/g, '');
 	}
 
-	// Sanitize on every input
-	function handleInput(e: Event) {
-		const input = e.target as HTMLInputElement;
-		customWordDraft = sanitize(input.value);
+	function validateInput(e: KeyboardEvent) {
+		// Prevent input of non-letter characters
+		if (
+			!/^[a-zA-Z]$/.test(e.key) &&
+			!['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)
+		) {
+			e.preventDefault();
+		}
+
+		if (e.key === 'Enter') {
+			addCustomWord();
+		}
+	}
+
+	// Prevent paste events
+	function handlePaste(e: ClipboardEvent) {
+		e.preventDefault();
+		const pastedText = e.clipboardData?.getData('text') || '';
+		const sanitized = sanitize(pastedText);
+		customWordDraft = sanitized;
 	}
 
 	// Derived validation: only valid if user exists, has enough coins, and input is correct length
@@ -97,12 +113,8 @@
 						maxlength="15"
 						minlength="3"
 						bind:value={customWordDraft}
-						on:input={handleInput}
-						on:keydown={(e) => {
-							if (e.key === 'Enter') {
-								addCustomWord();
-							}
-						}}
+						on:keydown={validateInput}
+						on:paste={handlePaste}
 					/>
 					<button
 						class="btn btn-primary {isValid ? '' : 'opacity-50'}"

@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import {
 	collection,
 	doc,
@@ -26,6 +27,7 @@ import {
 	allUsers,
 	gamesLoaded,
 	allGames,
+	authUser,
 } from '../store';
 import { showSuccessToast } from './notifications';
 
@@ -55,6 +57,9 @@ export const gameCollection = collection(fireStore, 'games');
 export const userCollection = collection(fireStore, 'users');
 export const drawingCollection = collection(fireStore, 'drawings');
 export const wordCollection = collection(fireStore, 'words');
+
+// Initialize Firebase Auth
+export const auth = getAuth(app);
 
 /**
  * Load specific users into the store
@@ -127,6 +132,13 @@ export async function createCustomWord(
 	createdBy: string,
 ): Promise<void> {
 	try {
+		// Validate word format - only allow English letters and numbers
+		if (!/^[a-zA-Z0-9]+$/.test(word)) {
+			throw new Error(
+				'Invalid word format - only English letters and numbers are allowed',
+			);
+		}
+
 		const wordRef = doc(wordCollection);
 		const newWord: Word = {
 			word: word,
@@ -137,13 +149,33 @@ export async function createCustomWord(
 		await setDocWithMiddleware(wordRef, newWord);
 	} catch (error) {
 		console.error('Error creating custom word:', error);
+		throw error; // Re-throw to handle in UI
 	}
 }
+
+// Initialize anonymous auth on app start
+export async function initializeAuth() {
+	try {
+		const result = await signInAnonymously(auth);
+		authUser.set(result.user);
+		return result.user;
+	} catch (error) {
+		console.error('Error initializing auth:', error);
+		return null;
+	}
+}
+
 /**
  * Create or retrieve a user
  */
 export async function createUser(name: string): Promise<User> {
 	try {
+		// Ensure we have an authenticated user
+		const currentAuth = get(authUser);
+		if (!currentAuth) {
+			await initializeAuth();
+		}
+
 		const userSnapshot = await getDocs(userCollection);
 		const userFound = userSnapshot.docs.find((doc) => doc.data().name === name);
 
@@ -160,12 +192,15 @@ export async function createUser(name: string): Promise<User> {
 			return user;
 		}
 
-		const userRef = doc(userCollection);
+		const auth = get(authUser);
+		if (!auth) throw new Error('No authenticated user');
+
+		const userRef = doc(userCollection, auth.uid);
 		const newUser: User = {
 			name,
 			coins: 0,
 			createdAt: new Date(),
-			id: userRef.id,
+			id: auth.uid,
 			dailyRewards: [],
 			upgrades: [],
 		};
@@ -800,6 +835,12 @@ export async function deleteGame(gameId: string): Promise<boolean> {
  */
 export async function initializeUserSession(): Promise<boolean> {
 	try {
+		// Ensure we have an authenticated user
+		const currentAuth = get(authUser);
+		if (!currentAuth) {
+			await initializeAuth();
+		}
+
 		// Always fetch fresh user data from DB if we have a name
 		const currentUserValue = get(currentUser);
 		if (currentUserValue?.name) {

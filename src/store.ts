@@ -1,7 +1,9 @@
 import type { Game, User } from './types';
+import type { User as FirebaseUser } from 'firebase/auth';
 import { writable } from 'svelte/store';
 
 // Create basic stores
+export const authUser = writable<FirebaseUser | null>(null);
 export const currentUser = writable<User | null>(null);
 export const currentUserGames = writable<string[]>([]);
 export const currentGame = writable<Game | null>(null);
