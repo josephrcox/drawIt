@@ -76,7 +76,7 @@ export async function submitGuess(
 		);
 
 		// Generate new word options for the next drawer
-		await getRandomWords(4, game);
+		await getRandomWords(3, game);
 	} else if (!currentDrawing.guesses.includes(guess)) {
 		// Add to the guesses only if it's a new guess
 		currentDrawing.guesses.push(guess);
@@ -94,9 +94,10 @@ export async function submitGuess(
 export async function getRandomWords(
 	count: number,
 	game?: Game,
+	force: boolean = false,
 ): Promise<WordOptions[]> {
 	// If game has word options, return those
-	if (game?.wordOptions && game.wordOptions.length > 0) {
+	if (game?.wordOptions && game.wordOptions.length > 0 && !force) {
 		return game.wordOptions;
 	}
 
@@ -143,9 +144,6 @@ export async function selectWord(
 	currentUser: string,
 	word: WordOptions,
 ) {
-	// Clear word options after selection
-	game.wordOptions = [];
-	await updateGame(game);
 	return word;
 }
 

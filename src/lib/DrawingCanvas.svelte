@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { currentUser } from '../store';
+	import { UserUpgrade } from '../types';
 
 	let width = 400;
 	let height = 400;
@@ -145,6 +147,8 @@
 	}
 
 	function clearCanvas() {
+		let prompt = window.confirm('Are you sure you want to clear the canvas?');
+		if (!prompt) return;
 		strokes = [];
 		currentStroke = null;
 		ctx.fillStyle = '#FFFFFF';
@@ -153,6 +157,11 @@
 
 	function getImageData(): string {
 		return canvas.toDataURL('image/png');
+	}
+
+	function setColor(color: string) {
+		strokeColor = color;
+		ctx.strokeStyle = color;
 	}
 
 	function updateCanvasSize() {
@@ -181,11 +190,22 @@
 	});
 
 	// Expose methods to parent
-	export { getImageData, clearCanvas, undo };
+	export { getImageData, clearCanvas, undo, setColor };
 </script>
 
 <div class="flex flex-col gap-2 w-full" bind:this={container}>
 	<div class="flex gap-2 justify-start items-center flex-wrap">
+		{#if $currentUser?.upgrades?.includes(UserUpgrade.ColorPicker)}
+			<input
+				type="color"
+				class="w-8 h-8 p-1 rounded-2xl border-2 border-primary cursor-pointer"
+				value={strokeColor}
+				on:input={(e) => {
+					strokeColor = e.currentTarget.value;
+					ctx.strokeStyle = e.currentTarget.value;
+				}}
+			/>
+		{/if}
 		{#each colors as color}
 			<button
 				class="w-8 h-8 rounded-full border-2 {strokeColor === color

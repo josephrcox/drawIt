@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { currentGame, currentUser, isDrawing } from '../store';
-	import type { Drawing, WordOptions } from '../types';
+	import { type Drawing, type WordOptions, UserUpgrade } from '../types';
 	import {
 		getCurrentDrawing,
 		submitGuess,
@@ -41,8 +41,13 @@
 
 	// Use reactive statement to refresh words
 	$: wordsPromise = $currentGame
-		? getRandomWords(4, $currentGame)
-		: getRandomWords(4);
+		? getRandomWords(
+				$currentUser?.upgrades?.includes(UserUpgrade.MoreWordOptions) ? 5 : 3,
+				$currentGame,
+			)
+		: getRandomWords(
+				$currentUser?.upgrades?.includes(UserUpgrade.MoreWordOptions) ? 5 : 3,
+			);
 
 	// Update isDrawing state based on drawingDraft
 	$: if (drawingDraft) {
@@ -50,7 +55,6 @@
 	} else {
 		$isDrawing = false;
 	}
-
 	// Handle guess submission with optimistic UI
 	async function handleGuessSubmission(guessText: string) {
 		if (!$currentGame || !$currentUser || !currentDrawing || !guessText.trim())
@@ -333,9 +337,18 @@
 											await addcoins($currentUser.name, -5);
 											// Force a re-render of the word list by incrementing the trigger
 											refreshTrigger++;
-											wordsPromise = $currentGame
-												? getRandomWords(4, $currentGame)
-												: getRandomWords(4);
+											if (!$currentGame) {
+												return;
+											}
+											wordsPromise = getRandomWords(
+												$currentUser?.upgrades?.includes(
+													UserUpgrade.MoreWordOptions,
+												)
+													? 5
+													: 3,
+												$currentGame,
+												true,
+											);
 										} finally {
 											// Add a small delay before allowing another refresh
 											setTimeout(() => {
@@ -347,11 +360,26 @@
 							>
 								<span>{isRefreshing ? 'Refreshing...' : 'Refresh Words'}</span>
 								{#if !isRefreshing}
-									<span class="text-xs text-black/60"
-										>(5 <img src={coinPng} class="w-4 h-4 inline" />)</span
+									<span class="text-xs items-center flex flex-row gap-1"
+										>5 <img
+											src={coinPng}
+											class="w-4 h-4 inline"
+											alt="coin"
+										/></span
 									>
 								{/if}
 							</button>
+							<p class="text-xs text-black/60 italic">
+								<!-- svelte-ignore a11y-click-events-have-key-events -->
+								<!-- svelte-ignore a11y-no-static-element-interactions -->
+								Get 5 options instead of 3 in the
+								<span
+									class="font-bold text-primary cursor-pointer"
+									on:click={() => {
+										window.location.href = '/?page=store';
+									}}>Store</span
+								>
+							</p>
 						{/await}
 					</div>
 				</div>
@@ -361,6 +389,19 @@
 						Ok, let's draw <span class="font-bold text-black"
 							>{drawingDraft?.secretWord.toUpperCase() ?? ''}</span
 						>
+						{#if $currentUser?.upgrades?.includes(UserUpgrade.ColorPicker)}
+							<p class="text-xs text-black/60 italic pt-4">
+								🌈 Purchase color wheel in the
+								<!-- svelte-ignore a11y-click-events-have-key-events -->
+								<!-- svelte-ignore a11y-no-static-element-interactions -->
+								<span
+									class="font-bold text-primary cursor-pointer"
+									on:click={() => {
+										window.location.href = '/?page=store';
+									}}>Store</span
+								>
+							</p>
+						{/if}
 					</h2>
 					<div class="w-full aspect-square max-w-[min(90vw,400px)] mx-auto">
 						<DrawingCanvas bind:this={canvas} />
@@ -394,6 +435,8 @@
 											const newDrawing = { ...drawingDraft, data: imageData };
 
 											// Update the game
+											// Clear word options after selection
+											$currentGame.wordOptions = [];
 											$currentGame.drawings.push(newDrawing);
 											await updateGame($currentGame);
 

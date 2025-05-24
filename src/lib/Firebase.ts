@@ -17,7 +17,7 @@ import {
 	arrayUnion,
 } from 'firebase/firestore';
 import { get } from 'svelte/store';
-import type { Game, Drawing, User, Word } from '../types';
+import type { Game, Drawing, User, Word, UserUpgrade } from '../types';
 import {
 	currentUser,
 	currentUserGames,
@@ -26,6 +26,7 @@ import {
 	gamesLoaded,
 	allGames,
 } from '../store';
+import { showSuccessToast } from './notifications';
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -164,6 +165,8 @@ export async function createUser(name: string): Promise<User> {
 			coins: 0,
 			createdAt: new Date(),
 			id: userRef.id,
+			dailyRewards: [],
+			upgrades: [],
 		};
 
 		await setDocWithMiddleware(userRef, newUser);
@@ -184,13 +187,7 @@ export async function createUser(name: string): Promise<User> {
  */
 export async function getUser(name: string): Promise<User | null> {
 	try {
-		// First check the store
-		const users = get(allUsers);
-		if (users[name]) {
-			return users[name];
-		}
-
-		// If not in store, fetch from Firebase
+		// Always fetch from Firebase, never trust the store
 		const userSnapshot = await getDocs(userCollection);
 		const userDoc = userSnapshot.docs.find((doc) => doc.data().name === name);
 
@@ -525,6 +522,8 @@ export async function generateRandomUsers(count: number = 20): Promise<void> {
 				coins,
 				createdAt: new Date(),
 				id: userRef.id,
+				dailyRewards: [],
+				upgrades: [],
 			};
 
 			await setDocWithMiddleware(userRef, newUser);
@@ -693,5 +692,86 @@ export async function deleteOrphanedGames(): Promise<number> {
 	} catch (error) {
 		console.error('Error deleting orphaned games:', error);
 		return 0;
+	}
+}
+
+/**
+ * Check and give daily reward if eligible
+ */
+export async function checkDailyReward(user: User): Promise<boolean> {
+	try {
+		const today = new Date().toISOString().split('T')[0];
+		if (user.dailyRewards?.includes(today)) return false;
+
+		const rewardCoins = Math.floor(Math.random() * 10) + 3;
+		const userRef = doc(userCollection, user.id);
+
+		await updateDoc(userRef, {
+			coins: user.coins + rewardCoins,
+			dailyRewards: arrayUnion(today),
+		});
+
+		const updatedUser = {
+			...user,
+			coins: user.coins + rewardCoins,
+			dailyRewards: [...(user.dailyRewards || []), today],
+		};
+
+		currentUser.set(updatedUser);
+		allUsers.update((users) => ({
+			...users,
+			[user.name]: updatedUser,
+		}));
+
+		showSuccessToast(`Daily reward: ${rewardCoins} coins!`);
+		return true;
+	} catch (error) {
+		console.error('Error giving daily reward:', error);
+		return false;
+	}
+}
+
+/**
+ * Purchase a user upgrade
+ */
+export async function purchaseUpgrade(
+	user: User,
+	upgrade: UserUpgrade,
+	coins: number,
+): Promise<boolean> {
+	try {
+		if (user.upgrades.includes(upgrade)) {
+			return false; // Already has this upgrade
+		}
+
+		if (user.coins < coins) {
+			return false; // Not enough coins
+		}
+
+		const userRef = doc(userCollection, user.id);
+		await updateDoc(userRef, {
+			upgrades: arrayUnion(upgrade),
+			coins: user.coins - coins,
+		});
+
+		// Fetch the latest user from the DB and normalize
+		const updatedUserFromDB = await getUser(user.name);
+		if (updatedUserFromDB) {
+			const normalizedUser = {
+				...updatedUserFromDB,
+				upgrades: Array.isArray(updatedUserFromDB.upgrades)
+					? updatedUserFromDB.upgrades
+					: [],
+				dailyRewards: Array.isArray(updatedUserFromDB.dailyRewards)
+					? updatedUserFromDB.dailyRewards
+					: [],
+			};
+			currentUser.set(normalizedUser);
+		}
+
+		return true;
+	} catch (error) {
+		console.error('Error purchasing upgrade:', error);
+		return false;
 	}
 }

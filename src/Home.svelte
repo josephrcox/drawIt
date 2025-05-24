@@ -17,6 +17,7 @@
 		getUsers,
 		loadGames,
 		loadUsers,
+		checkDailyReward,
 	} from './lib/Firebase';
 	import { getGameState } from './lib/utils';
 	import GameSection from './components/GameSection.svelte';
@@ -66,24 +67,38 @@
 		loading = true;
 		$gamesLoaded = false;
 
-		// Check if we have a user in store (loaded from localStorage in store.ts)
-		if ($currentUser && $currentUser.name) {
-			// Load fresh data for the user
-			const user = await getUser($currentUser.name);
-			if (!user) {
+		// Always fetch fresh user data from DB if we have a name
+		if ($currentUser?.name) {
+			const dbUser = await getUser($currentUser.name);
+
+			if (!dbUser) {
 				// If user doesn't exist anymore, clear the store
 				$currentUser = null;
 			} else {
+				// Normalize user fields
+				const normalizedUser = {
+					...dbUser,
+					upgrades: Array.isArray(dbUser.upgrades) ? dbUser.upgrades : [],
+					dailyRewards: Array.isArray(dbUser.dailyRewards)
+						? dbUser.dailyRewards
+						: [],
+				};
+
+				// Check for daily reward
+				await checkDailyReward(normalizedUser);
+
 				// Load games and cache other users in those games
-				const games = await loadGames($currentUser!.name);
+				const games = await loadGames(normalizedUser.name);
 				const otherUsers = games.flatMap((game) =>
-					game.users.filter((name) => name !== $currentUser!.name),
+					game.users.filter((name) => name !== normalizedUser.name),
 				);
 				await loadUsers(otherUsers);
 				$gamesLoaded = true;
+
+				// Only now set $currentUser to the normalized DB value
+				$currentUser = normalizedUser;
 			}
 		}
-
 		loading = false;
 	});
 </script>

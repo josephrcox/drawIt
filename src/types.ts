@@ -3,6 +3,8 @@ export type User = {
 	name: string;
 	coins: number;
 	createdAt: Date;
+	dailyRewards: string[]; // Array of ISO date strings
+	upgrades: UserUpgrade[];
 };
 
 export type localUserReference = {
@@ -32,6 +34,11 @@ export type Comment = {
 	content: string;
 	createdBy: string;
 };
+
+export enum UserUpgrade {
+	MoreWordOptions = 'moreWordOptions',
+	ColorPicker = 'colorPicker',
+}
 
 export type Game = {
 	id: string;
