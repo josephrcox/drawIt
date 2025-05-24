@@ -38,6 +38,7 @@ export type Game = {
 	users: string[]; // user names
 	drawings: Drawing[]; // new drawing ids are pushed and then pulled from the drawings collection
 	createdAt: Date;
+	wordOptions: WordOptions[];
 };
 
 export type WordOptions = {

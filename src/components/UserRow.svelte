@@ -23,7 +23,7 @@
 			</div>
 		{/if}
 		<div class="flex flex-col items-start">
-			<span class="font-medium text-black">{name}</span>
+			<span class="font-medium text-black">{name.toLowerCase()}</span>
 			<div class="flex items-center gap-1 text-sm text-black/60">
 				{#if coins !== null}
 					<span>{coins}</span>

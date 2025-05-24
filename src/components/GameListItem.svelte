@@ -2,7 +2,7 @@
 	import { allUsers, currentGame } from '../store';
 	import type { Game } from '../types';
 	// @ts-ignore
-	import Userrow from './UserRow.svelte';
+	import UserRow from './UserRow.svelte';
 
 	export let game: Game | null = null;
 	export let currentUserName: string = '';
@@ -31,7 +31,7 @@
 >
 	{#if isNewGame}
 		<div class="flex flex-row text-start w-full">
-			<Userrow name={user} {coins} onClick={handleClick} />
+			<UserRow name={user} {coins} onClick={handleClick} />
 		</div>
 		<!-- <button
 			class="bg-black text-white rounded-md px-3 py-1 font-bold ml-2"
@@ -42,7 +42,7 @@
 		{#each game.users.filter((u) => u !== currentUserName) as u}
 			<div class="w-full flex flex-col items-center justify-center gap-0.5">
 				{#if $allUsers[u]}
-					<Userrow
+					<UserRow
 						name={u}
 						coins={$allUsers[u].coins}
 						subtitle={`${game.drawings.length} drawing${game.drawings.length === 1 ? '' : 's'}`}

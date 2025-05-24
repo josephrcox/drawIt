@@ -8,6 +8,7 @@
 		currentUserGames,
 		allUsers,
 		gamesLoaded,
+		allGames,
 	} from './store';
 	import {
 		createGame,
@@ -29,6 +30,9 @@
 	export let navigate: (page: string) => void;
 
 	$: userName = $currentUser ? $currentUser.name : null;
+
+	// Helper to get full game objects from IDs
+	$: userGames = $currentUserGames.map((id) => $allGames[id]).filter(Boolean);
 
 	async function createUserAndSave(name: string) {
 		if (name.trim() && /^[a-zA-Z0-9]+$/.test(name)) {
@@ -93,17 +97,17 @@
 			<div class="text-primary text-lg font-semibold">Loading...</div>
 		</div>
 	{:else if $currentUser}
-		{#if $currentUserGames.length !== 0}
+		{#if userGames.length !== 0}
 			<div class="flex flex-col gap-6 w-full max-w-xs mx-auto">
 				{#if userName}
-					{#if $currentUserGames.filter( (game) => ['draw', 'guess'].includes(getGameState(game, userName)), ).length > 0}
+					{#if userGames.filter( (game) => ['draw', 'guess'].includes(getGameState(game, userName)), ).length > 0}
 						<div class="rounded-2xl bg-white/90 shadow-md p-4">
 							<div
 								class="text-center text-2xl font-bold mb-2 animate-gradient-text"
 							>
 								Your Turn!
 							</div>
-							{#each $currentUserGames.filter( (game) => ['draw', 'guess'].includes(getGameState(game, userName)), ) as game}
+							{#each userGames.filter( (game) => ['draw', 'guess'].includes(getGameState(game, userName)), ) as game}
 								<GameSection
 									title=""
 									games={[game]}
@@ -114,14 +118,14 @@
 						</div>
 					{/if}
 
-					{#if $currentUserGames.filter((game) => getGameState(game, userName) === 'waiting').length > 0}
+					{#if userGames.filter((game) => getGameState(game, userName) === 'waiting').length > 0}
 						<div class="rounded-2xl bg-white/60 shadow-sm p-4 opacity-60">
 							<div
 								class="text-center text-secondary/60 font-semibold text-xs mb-2"
 							>
 								Waiting
 							</div>
-							{#each $currentUserGames.filter((game) => getGameState(game, userName) === 'waiting') as game}
+							{#each userGames.filter((game) => getGameState(game, userName) === 'waiting') as game}
 								<GameSection
 									title=""
 									games={[game]}

@@ -74,6 +74,9 @@ export async function submitGuess(
 		showSuccessToast(
 			`It was ${currentDrawing.secretWord}! You both get ${currentDrawing.coins} coins!`,
 		);
+
+		// Generate new word options for the next drawer
+		await getRandomWords(4, game);
 	} else if (!currentDrawing.guesses.includes(guess)) {
 		// Add to the guesses only if it's a new guess
 		currentDrawing.guesses.push(guess);
@@ -88,7 +91,15 @@ export async function submitGuess(
 /**
  * Get random words for drawing options
  */
-export async function getRandomWords(count: number): Promise<WordOptions[]> {
+export async function getRandomWords(
+	count: number,
+	game?: Game,
+): Promise<WordOptions[]> {
+	// If game has word options, return those
+	if (game?.wordOptions && game.wordOptions.length > 0) {
+		return game.wordOptions;
+	}
+
 	const wordList: WordOptions[] = [];
 
 	for (const word of words) {
@@ -115,31 +126,27 @@ export async function getRandomWords(count: number): Promise<WordOptions[]> {
 		randomWords[i].coins = i + 1;
 	}
 
+	// If game is provided, update it with the new word options
+	if (game) {
+		game.wordOptions = randomWords;
+		await updateGame(game);
+	}
+
 	return randomWords;
 }
 
 /**
- * Select a word and create a new drawing
+ * Select a word and clear word options
  */
-export function selectWord(game: Game, currentUser: string, word: WordOptions) {
-	const newDrawing: Drawing = {
-		secretWord: word.secretWord,
-		coins: word.coins,
-		data: '',
-		artist: currentUser,
-		guessed: false,
-		guesses: [],
-		createdAt: new Date(),
-		guessedBy: '',
-		hintPurchased: false,
-		superHintPurchased: false,
-		comments: [],
-		likes: [],
-	};
-
-	game.drawings.push(newDrawing);
-	updateGame(game);
-	return newDrawing;
+export async function selectWord(
+	game: Game,
+	currentUser: string,
+	word: WordOptions,
+) {
+	// Clear word options after selection
+	game.wordOptions = [];
+	await updateGame(game);
+	return word;
 }
 
 /**

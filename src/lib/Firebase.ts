@@ -24,6 +24,7 @@ import {
 	currentGame,
 	allUsers,
 	gamesLoaded,
+	allGames,
 } from '../store';
 
 // TODO: Add SDKs for Firebase products that you want to use
@@ -284,7 +285,14 @@ export async function loadGames(name: string): Promise<Game[]> {
 				return { ...data, id: doc.id } as Game;
 			});
 
-		currentUserGames.set(games);
+		// Cache all games by ID
+		const gamesById: { [key: string]: Game } = {};
+		games.forEach((game) => {
+			gamesById[game.id] = game;
+		});
+		allGames.update((existing) => ({ ...existing, ...gamesById }));
+
+		currentUserGames.set(games.map((game) => game.id));
 		return games;
 	} catch (error) {
 		console.error('Error in loadGames:', error);
@@ -303,6 +311,7 @@ export async function createGame(users: string[]): Promise<Game> {
 		users,
 		createdAt: new Date(),
 		drawings: [],
+		wordOptions: [],
 	} as Game;
 
 	await setDocWithMiddleware(gameRef, game);
@@ -323,6 +332,7 @@ export async function updateGame(game: Game) {
 		const gameRef = doc(gameCollection, game.id);
 		await updateDoc(gameRef, {
 			drawings: game.drawings,
+			wordOptions: game.wordOptions,
 		});
 		return game;
 	} catch (error) {

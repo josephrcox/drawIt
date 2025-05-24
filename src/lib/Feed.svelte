@@ -247,7 +247,16 @@
 			ctx.font = 'bold 30px Outfit, sans-serif';
 			const wordText = drawing.guessed ? drawing.secretWord : '?';
 			ctx.fillStyle = PRIMARY_COLOR;
-			const artistText = ` by ${drawing.artist}`;
+			let dateObj;
+			if (
+				drawing.createdAt &&
+				typeof (drawing.createdAt as any).toDate === 'function'
+			) {
+				dateObj = (drawing.createdAt as any).toDate();
+			} else {
+				dateObj = new Date(drawing.createdAt);
+			}
+			const artistText = ` by ${drawing.artist.toLowerCase()} on ${dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`;
 			// Measure text to ensure it doesn't overflow
 			const wordWidth = ctx.measureText(wordText).width;
 			const artistWidth = ctx.measureText(artistText).width;
@@ -319,7 +328,7 @@
 
 			// Create filename
 			const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-			screenshotFilename = `drawit-${drawing.artist}-${timestamp}.png`;
+			screenshotFilename = `drawit-${drawing.artist.toLowerCase()}-${timestamp}.png`;
 
 			// Store the blob for later use by our custom UI
 			canvas.toBlob(
@@ -463,6 +472,18 @@
 		ctx.fillText(line, x, y + lineCount * lineHeight);
 		return lineCount + 1; // Return number of lines for positioning subsequent elements
 	}
+
+	function formatDrawingDate(createdAt: any): string {
+		if (createdAt && typeof createdAt.toDate === 'function') {
+			return createdAt
+				.toDate()
+				.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+		}
+		return new Date(createdAt).toLocaleDateString('en-US', {
+			month: 'long',
+			day: 'numeric',
+		});
+	}
 </script>
 
 <div class="p-4">
@@ -583,7 +604,12 @@
 								<span class="font-bold text-primary"> ? </span>
 							{/if}
 							by
-							<span class="font-semibold">{drawing.artist} </span>
+							<span class="font-semibold">
+								{drawing.artist.toLowerCase()}
+							</span>
+							<span class="text-[10px] opacity-50">
+								on {formatDrawingDate(drawing.createdAt)}
+							</span>
 						</p>
 						<p
 							class="text-[0.8rem] text-center align-middle items-center w-3/4"

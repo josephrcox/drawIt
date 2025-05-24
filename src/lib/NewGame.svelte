@@ -1,8 +1,14 @@
 <script lang="ts">
-	import { currentUser, currentGame, currentUserGames } from '../store';
+	import {
+		currentUser,
+		currentGame,
+		currentUserGames,
+		allGames,
+	} from '../store';
 	import { createGame, getUsers } from './Firebase';
 	import type { User } from '../types';
-	import Userrow from '../components/Userrow.svelte';
+	// @ts-ignore
+	import Userrow from '../components/UserRow.svelte';
 	import Logo from '../components/Logo.svelte';
 
 	let userSearchQuery: string = '';
@@ -11,6 +17,9 @@
 	let isLoading = true;
 	let isCreatingGame = false;
 	export let navigate: ((page: string) => void) | undefined;
+
+	// Helper to get full game objects from IDs
+	$: userGames = $currentUserGames.map((id) => $allGames[id]).filter(Boolean);
 
 	function searchUsers() {
 		clearTimeout(searchTimeout);
@@ -90,16 +99,9 @@
 						name={user.name}
 						coins={user.coins}
 						showAvatar={true}
-						subtitle={$currentUserGames.filter((game) =>
-							game.users.includes(user.name),
-						).length > 0
-							? `${$currentUserGames.filter((game) => game.users.includes(user.name)).length} game${
-									$currentUserGames.filter((game) =>
-										game.users.includes(user.name),
-									).length > 1
-										? 's'
-										: ''
-								}`
+						subtitle={userGames.filter((game) => game.users.includes(user.name))
+							.length > 0
+							? `${userGames.filter((game) => game.users.includes(user.name)).length} game${userGames.filter((game) => game.users.includes(user.name)).length > 1 ? 's' : ''}`
 							: null}
 						onClick={() => handleCreateGame(user)}
 					/>

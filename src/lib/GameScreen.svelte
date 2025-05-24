@@ -40,7 +40,9 @@
 	}
 
 	// Use reactive statement to refresh words
-	$: wordsPromise = getRandomWords(4);
+	$: wordsPromise = $currentGame
+		? getRandomWords(4, $currentGame)
+		: getRandomWords(4);
 
 	// Update isDrawing state based on drawingDraft
 	$: if (drawingDraft) {
@@ -274,8 +276,9 @@
 										? 'btn-secondary border-black text-white h-20'
 										: 'btn-primary border-primary text-white'}
 									"
-									on:click={() => {
+									on:click={async () => {
 										if ($currentGame && $currentUser) {
+											await selectWord($currentGame, $currentUser.name, word);
 											drawingDraft = {
 												secretWord: word.secretWord,
 												coins: word.coins,
@@ -330,7 +333,9 @@
 											await addcoins($currentUser.name, -5);
 											// Force a re-render of the word list by incrementing the trigger
 											refreshTrigger++;
-											wordsPromise = getRandomWords(4);
+											wordsPromise = $currentGame
+												? getRandomWords(4, $currentGame)
+												: getRandomWords(4);
 										} finally {
 											// Add a small delay before allowing another refresh
 											setTimeout(() => {
@@ -381,6 +386,11 @@
 										try {
 											// Get the drawing data
 											const imageData = canvas.getImageData();
+											if (!imageData) {
+												throw new Error('No drawing data');
+											}
+
+											// Create the drawing with the image data
 											const newDrawing = { ...drawingDraft, data: imageData };
 
 											// Update the game
@@ -390,6 +400,8 @@
 											// Reset local state
 											drawingDraft = null;
 											$currentGame = null; // Return to homepage
+										} catch (error) {
+											console.error('Error submitting drawing:', error);
 										} finally {
 											submittingDraft = false;
 										}

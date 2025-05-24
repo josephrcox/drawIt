@@ -3,11 +3,12 @@ import { writable } from 'svelte/store';
 
 // Create basic stores
 export const currentUser = writable<User | null>(null);
-export const currentUserGames = writable<Game[]>([]);
+export const currentUserGames = writable<string[]>([]);
 export const currentGame = writable<Game | null>(null);
 export const allUsers = writable<{ [key: string]: User }>({});
 export const gamesLoaded = writable<boolean>(false);
 export const isDrawing = writable<boolean>(false);
+export const allGames = writable<{ [key: string]: Game }>({});
 
 // Initialize from localStorage
 try {
@@ -38,9 +39,9 @@ currentUser.subscribe((user) => {
 	}
 });
 
-currentUserGames.subscribe((games) => {
-	if (games) {
-		localStorage.setItem('drawIt-games-v2', JSON.stringify(games));
+currentUserGames.subscribe((gameIds) => {
+	if (gameIds) {
+		localStorage.setItem('drawIt-games-v2', JSON.stringify(gameIds));
 	} else {
 		localStorage.removeItem('drawIt-games-v2');
 	}
