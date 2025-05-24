@@ -18,6 +18,8 @@
 		loadGames,
 		loadUsers,
 		checkDailyReward,
+		deleteGame,
+		initializeUserSession,
 	} from './lib/Firebase';
 	import { getGameState } from './lib/utils';
 	import GameSection from './components/GameSection.svelte';
@@ -63,42 +65,25 @@
 		}
 	}
 
+	async function handleDeleteGame(gameId: string) {
+		if (
+			!confirm(
+				'Are you sure you want to delete this game? This cannot be undone.',
+			)
+		) {
+			return;
+		}
+
+		const success = await deleteGame(gameId);
+		if (success) {
+			window.location.reload();
+		}
+	}
+
 	onMount(async () => {
 		loading = true;
 		$gamesLoaded = false;
-
-		// Always fetch fresh user data from DB if we have a name
-		if ($currentUser?.name) {
-			const dbUser = await getUser($currentUser.name);
-
-			if (!dbUser) {
-				// If user doesn't exist anymore, clear the store
-				$currentUser = null;
-			} else {
-				// Normalize user fields
-				const normalizedUser = {
-					...dbUser,
-					upgrades: Array.isArray(dbUser.upgrades) ? dbUser.upgrades : [],
-					dailyRewards: Array.isArray(dbUser.dailyRewards)
-						? dbUser.dailyRewards
-						: [],
-				};
-
-				// Check for daily reward
-				await checkDailyReward(normalizedUser);
-
-				// Load games and cache other users in those games
-				const games = await loadGames(normalizedUser.name);
-				const otherUsers = games.flatMap((game) =>
-					game.users.filter((name) => name !== normalizedUser.name),
-				);
-				await loadUsers(otherUsers);
-				$gamesLoaded = true;
-
-				// Only now set $currentUser to the normalized DB value
-				$currentUser = normalizedUser;
-			}
-		}
+		await initializeUserSession();
 		loading = false;
 	});
 </script>
@@ -123,12 +108,21 @@
 								Your Turn!
 							</div>
 							{#each userGames.filter( (game) => ['draw', 'guess'].includes(getGameState(game, userName)), ) as game}
-								<GameSection
-									title=""
-									games={[game]}
-									currentUserName={userName}
-									{navigate}
-								/>
+								<div class="relative">
+									<button
+										class="absolute -top-2 -right-1 opacity-50 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md z-10"
+										on:click={() => handleDeleteGame(game.id)}
+										title="Delete game"
+									>
+										×
+									</button>
+									<GameSection
+										title=""
+										games={[game]}
+										currentUserName={userName}
+										{navigate}
+									/>
+								</div>
 							{/each}
 						</div>
 					{/if}
@@ -138,15 +132,26 @@
 							<div
 								class="text-center text-secondary/60 font-semibold text-xs mb-2"
 							>
-								Waiting
+								Waiting ({userGames.filter(
+									(game) => getGameState(game, userName) === 'waiting',
+								).length})
 							</div>
 							{#each userGames.filter((game) => getGameState(game, userName) === 'waiting') as game}
-								<GameSection
-									title=""
-									games={[game]}
-									currentUserName={userName}
-									{navigate}
-								/>
+								<div class="relative">
+									<button
+										class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md z-10"
+										on:click={() => handleDeleteGame(game.id)}
+										title="Delete game"
+									>
+										×
+									</button>
+									<GameSection
+										title=""
+										games={[game]}
+										currentUserName={userName}
+										{navigate}
+									/>
+								</div>
 							{/each}
 						</div>
 					{/if}

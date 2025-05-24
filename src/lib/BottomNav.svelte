@@ -35,10 +35,10 @@
 				on:click={() => handleNavigate('store')}
 			>
 				<div class="flex items-center gap-1">
-					<img src={coinGif} class="w-5 h-5" alt="coins" />
-					<span class="text-sm font-medium">{$currentUser?.coins || 0}</span>
+					<img src={coinGif} class="w-3 h-3" alt="coins" />
+					<span class="text-xs font-medium">{$currentUser?.coins || 0}</span>
 				</div>
-				<span class="text-xs text-gray-500">coins</span>
+				<span class="text-xs text-gray-500">Store</span>
 			</button>
 
 			{#if $currentGame}

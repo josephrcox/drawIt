@@ -5,11 +5,12 @@
 		currentUserGames,
 		allGames,
 	} from '../store';
-	import { createGame, getUsers } from './Firebase';
+	import { createGame, getUsers, initializeUserSession } from './Firebase';
 	import type { User } from '../types';
 	// @ts-ignore
 	import Userrow from '../components/UserRow.svelte';
 	import Logo from '../components/Logo.svelte';
+	import { onMount } from 'svelte';
 
 	let userSearchQuery: string = '';
 	let startNewGameUsers: User[] = [];
@@ -31,12 +32,12 @@
 		}, 300); // 300ms debounce
 	}
 
-	// Initial load
-	(async () => {
+	onMount(async () => {
 		isLoading = true;
+		await initializeUserSession();
 		startNewGameUsers = await getUsers('');
 		isLoading = false;
-	})();
+	});
 
 	async function handleCreateGame(user: User) {
 		if (!$currentUser || isCreatingGame) return;

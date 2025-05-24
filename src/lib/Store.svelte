@@ -78,7 +78,7 @@
 				class="flex flex-col items-start justify-center gap-4 bg-white p-4 rounded-2xl"
 			>
 				<div class="flex flex-row justify-between w-full">
-					<p class="text-gray-600 text-lg font-bold">🤬 Add a Custom Word</p>
+					<p class="text-gray-600 text-md font-bold">🤬 Add a Custom Word</p>
 					<div class="flex flex-row items-center justify-center gap-2">
 						<img src={coinGif} class="w-4 h-4" alt="coins" />
 						<span class="text-md font-bold">30</span>
@@ -122,7 +122,7 @@
 				class="flex flex-col items-start justify-center gap-4 bg-white p-4 rounded-2xl"
 			>
 				<div class="flex flex-row justify-between w-full">
-					<p class="text-gray-600 text-lg font-bold">🤔 More Word Options</p>
+					<p class="text-gray-600 text-md font-bold">🤔 More Word Options</p>
 					<div class="flex flex-row items-center justify-center gap-2">
 						<img src={coinGif} class="w-4 h-4" alt="coins" />
 						<span class="text-md font-bold">50</span>
@@ -174,7 +174,7 @@
 				class="flex flex-col items-start justify-center gap-4 bg-white p-4 rounded-2xl"
 			>
 				<div class="flex flex-row justify-between w-full">
-					<p class="text-gray-600 text-lg font-bold">🌈 Color Wheel</p>
+					<p class="text-gray-600 text-md font-bold">🌈 Color Wheel</p>
 					<div class="flex flex-row items-center justify-center gap-2">
 						<img src={coinGif} class="w-4 h-4" alt="coins" />
 						<span class="text-md font-bold">75</span>

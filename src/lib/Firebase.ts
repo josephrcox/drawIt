@@ -15,6 +15,7 @@ import {
 	Timestamp,
 	writeBatch,
 	arrayUnion,
+	deleteDoc,
 } from 'firebase/firestore';
 import { get } from 'svelte/store';
 import type { Game, Drawing, User, Word, UserUpgrade } from '../types';
@@ -772,6 +773,71 @@ export async function purchaseUpgrade(
 		return true;
 	} catch (error) {
 		console.error('Error purchasing upgrade:', error);
+		return false;
+	}
+}
+
+/**
+ * Delete a game
+ */
+export async function deleteGame(gameId: string): Promise<boolean> {
+	try {
+		const gameRef = doc(gameCollection, gameId);
+		await deleteDoc(gameRef);
+
+		// Reset games loaded state to trigger refresh
+		gamesLoaded.set(false);
+		return true;
+	} catch (error) {
+		console.error('Error deleting game:', error);
+		return false;
+	}
+}
+
+/**
+ * Initialize user session and load games
+ * This should be called on mount of any page that needs user data
+ */
+export async function initializeUserSession(): Promise<boolean> {
+	try {
+		// Always fetch fresh user data from DB if we have a name
+		const currentUserValue = get(currentUser);
+		if (currentUserValue?.name) {
+			const dbUser = await getUser(currentUserValue.name);
+
+			if (!dbUser) {
+				// If user doesn't exist anymore, clear the store
+				currentUser.set(null);
+				return false;
+			}
+
+			// Normalize user fields
+			const normalizedUser = {
+				...dbUser,
+				upgrades: Array.isArray(dbUser.upgrades) ? dbUser.upgrades : [],
+				dailyRewards: Array.isArray(dbUser.dailyRewards)
+					? dbUser.dailyRewards
+					: [],
+			};
+
+			// Check for daily reward
+			await checkDailyReward(normalizedUser);
+
+			// Load games and cache other users in those games
+			const games = await loadGames(normalizedUser.name);
+			const otherUsers = games.flatMap((game) =>
+				game.users.filter((name) => name !== normalizedUser.name),
+			);
+			await loadUsers(otherUsers);
+			gamesLoaded.set(true);
+
+			// Only now set currentUser to the normalized DB value
+			currentUser.set(normalizedUser);
+			return true;
+		}
+		return false;
+	} catch (error) {
+		console.error('Error initializing user session:', error);
 		return false;
 	}
 }
