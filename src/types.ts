@@ -5,6 +5,26 @@ export type User = {
 	createdAt: Date;
 	dailyRewards: string[]; // Array of ISO date strings
 	upgrades: UserUpgrade[];
+	notifications: UserNotification[];
+};
+
+export enum NotificationAction {
+	like = 'like',
+	comment = 'comment',
+}
+
+export enum NotificationEntityType {
+	drawing = 'drawing',
+}
+
+export type UserNotification = {
+	id: string; // Unique identifier for the notification
+	entityId: string;
+	entityType: NotificationEntityType;
+	action: NotificationAction;
+	createdAt: Date;
+	read: boolean;
+	userId: string;
 };
 
 export type localUserReference = {

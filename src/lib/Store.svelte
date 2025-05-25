@@ -148,7 +148,7 @@
 				<button
 					class="btn btn-primary w-full {($currentUser?.coins ?? 0) < 50 ||
 					$currentUser?.upgrades?.includes(UserUpgrade.MoreWordOptions)
-						? 'opacity-50 cursor-not-allowed'
+						? 'opacity-100 cursor-not-allowed'
 						: ''}"
 					on:click={async () => {
 						if (
@@ -200,7 +200,7 @@
 				<button
 					class="btn btn-primary w-full {($currentUser?.coins ?? 0) < 75 ||
 					$currentUser?.upgrades?.includes(UserUpgrade.ColorPicker)
-						? 'opacity-50 cursor-not-allowed'
+						? 'opacity-100 cursor-not-allowed'
 						: ''}"
 					on:click={async () => {
 						if (

@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { currentUser } from '../store';
-	import { addcoins, getUsers } from './Firebase';
+	import { addcoins, getUsers, lowercaseAllUserNames } from './Firebase';
 	import { onMount } from 'svelte';
 	import type { User } from '../types';
 	import { migrateDrawings } from '../../migration';
 	import { removeDrawingsFieldFromGames } from '../../removeDrawingsField';
+	import { switchToUser } from '../store';
 
 	let isOpen = false;
 	let users: User[] = [];
+	let selectedUserId: string | null = null;
 
 	async function handleKeyPress(event: KeyboardEvent) {
 		if (event.key === '\\') {
@@ -47,6 +49,35 @@
 		} catch (error) {
 			console.error('Error deleting users:', error);
 			alert('Error deleting users. Check console for details.');
+		}
+	}
+
+	async function handleEmulateUser() {
+		if (!selectedUserId) {
+			alert('Please select a user to emulate.');
+			return;
+		}
+
+		const userToEmulate = users.find((u) => u.id === selectedUserId);
+
+		if (!userToEmulate) {
+			alert('Selected user not found.');
+			return;
+		}
+
+		if (
+			!confirm(
+				`Are you sure you want to emulate ${userToEmulate.name}? This will log you out of your current session.`,
+			)
+		) {
+			return;
+		}
+
+		try {
+			switchToUser(userToEmulate);
+		} catch (error) {
+			console.error('Error emulating user:', error);
+			alert('Error emulating user. Check console for details.');
 		}
 	}
 
@@ -102,7 +133,10 @@
 				<button class="btn btn-secondary" on:click={loadUsers}>
 					Refresh Users
 				</button>
-				<button class="btn btn-secondary" on:click={migrateDrawings}>
+				<button class="btn btn-warning" on:click={lowercaseAllUserNames}>
+					Lowercase All Names
+				</button>
+				<!-- <button class="btn btn-secondary" on:click={migrateDrawings}>
 					Migrate Drawings
 				</button>
 				<button
@@ -110,7 +144,29 @@
 					on:click={removeDrawingsFieldFromGames}
 				>
 					Remove Drawings Field From Games
-				</button>
+				</button> -->
+
+				<div class="mt-4 border-t pt-4">
+					<h3 class="text-md font-semibold mb-2">Emulate User</h3>
+					<select
+						class="select select-bordered w-full mb-2"
+						bind:value={selectedUserId}
+					>
+						<option disabled selected value={null}>Select a user</option>
+						{#each users as user (user.id)}
+							<option value={user.id}>
+								{user.name} ({user.id.substring(0, 6)}...)
+							</option>
+						{/each}
+					</select>
+					<button
+						class="btn btn-warning w-full"
+						on:click={handleEmulateUser}
+						disabled={!selectedUserId}
+					>
+						Emulate Selected User
+					</button>
+				</div>
 			</div>
 
 			<div class="mt-4">

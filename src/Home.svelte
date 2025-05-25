@@ -253,7 +253,7 @@
 						>
 							Your Turn!
 						</div>
-						{#each processedUserGames.filter((g) => g.state === 'draw' || g.state === 'guess') as gameWithState ((gameWithState.id, gameWithState.drawingsCount))}
+						{#each processedUserGames.filter((g) => g.state === 'draw' || g.state === 'guess') as gameWithState (gameWithState.id)}
 							<div class="relative">
 								<button
 									class="absolute -top-2 -right-1 opacity-50 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md z-10"

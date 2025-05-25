@@ -23,7 +23,16 @@ import {
 	FieldPath,
 } from 'firebase/firestore';
 import { get } from 'svelte/store';
-import type { Game, Drawing, User, Word, UserUpgrade } from '../types';
+import {
+	NotificationEntityType,
+	type Game,
+	type Drawing,
+	type User,
+	type Word,
+	type UserUpgrade,
+	NotificationAction,
+	type UserNotification,
+} from '../types';
 import {
 	currentUser,
 	currentUserGames,
@@ -94,10 +103,90 @@ export async function loadUsers(userNames: string[]): Promise<void> {
 	}
 }
 
+export async function addNotification(
+	actingUserId: string, // User ID who performed the action (e.g., liked or commented)
+	drawingId: string,
+	action: NotificationAction,
+): Promise<void> {
+	try {
+		const drawingDoc = await getDoc(doc(drawingCollection, drawingId));
+		if (!drawingDoc.exists()) {
+			console.error('Drawing not found for notification:', drawingId);
+			return;
+		}
+		const drawingData = drawingDoc.data() as Drawing;
+
+		const artist = await getUserByIdOrName(drawingData.artist);
+		let guessedByUser: User | null = null;
+		if (drawingData.guessedBy) {
+			guessedByUser = await getUserByIdOrName(drawingData.guessedBy);
+		}
+
+		const usersToNotify: User[] = [];
+
+		if (artist && artist.id !== actingUserId) {
+			usersToNotify.push(artist);
+		}
+
+		if (
+			action === NotificationAction.comment &&
+			guessedByUser &&
+			guessedByUser.id !== actingUserId
+		) {
+			// Also notify the user who guessed, if they are not the artist and not the commenter
+			if (!artist || guessedByUser.id !== artist.id) {
+				usersToNotify.push(guessedByUser);
+			}
+		}
+
+		// Remove duplicate users to notify (e.g. if artist is also the guesser)
+		const uniqueUsersToNotify = usersToNotify.filter(
+			(user, index, self) => index === self.findIndex((u) => u.id === user.id),
+		);
+
+		for (const userToNotify of uniqueUsersToNotify) {
+			if (!userToNotify || !userToNotify.id) continue;
+
+			const newNotification: UserNotification = {
+				id: crypto.randomUUID(),
+				entityId: drawingId,
+				action,
+				entityType: NotificationEntityType.drawing,
+				userId: actingUserId, // The user who triggered the notification
+				createdAt: new Date(),
+				read: false,
+			};
+
+			const userRef = doc(userCollection, userToNotify.id);
+			// We need to fetch the user doc again to get the latest notifications array
+			const userToNotifyDoc = await getDoc(userRef);
+			if (userToNotifyDoc.exists()) {
+				const userToNotifyData = userToNotifyDoc.data() as User;
+				const currentNotifications = Array.isArray(
+					userToNotifyData.notifications,
+				)
+					? userToNotifyData.notifications
+					: [];
+				// Only add if this notification id does not already exist
+				if (
+					!currentNotifications.some((n: any) => n.id === newNotification.id)
+				) {
+					await updateDoc(userRef, {
+						notifications: arrayUnion(newNotification),
+					});
+				}
+			}
+		}
+	} catch (error) {
+		console.error('Error adding notification:', error);
+	}
+}
+
 export async function addComment(
 	drawingId: string,
 	comment: string,
-	user: string,
+	username: string,
+	userId: string,
 ): Promise<Drawing | null> {
 	try {
 		// get doc  with the id
@@ -108,11 +197,17 @@ export async function addComment(
 		}
 		const ddata = ddoc.data() as Drawing;
 
-		const newComment = { content: comment, createdBy: user };
+		const newComment = { content: comment, createdBy: username };
 		const updatedComments = [...(ddata.comments || []), newComment];
 
 		await updateDoc(ddoc.ref, { comments: updatedComments });
 
+		// Use the acting user's ID for the notification
+		await addNotification(
+			userId, // ID of the user who made the comment
+			drawingId,
+			NotificationAction.comment,
+		);
 		return { ...ddata, comments: updatedComments, id: ddoc.id };
 	} catch (error) {
 		console.error('Error adding comment:', error);
@@ -173,6 +268,7 @@ export async function initializeAuth() {
  * Create or retrieve a user
  */
 export async function createUser(name: string): Promise<User> {
+	name = name.toLowerCase();
 	try {
 		// Check if user already exists
 		const userSnapshot = await getDocs(userCollection);
@@ -200,6 +296,7 @@ export async function createUser(name: string): Promise<User> {
 			id: userRef.id,
 			dailyRewards: [],
 			upgrades: [],
+			notifications: [],
 		};
 
 		await setDocWithMiddleware(userRef, newUser);
@@ -476,6 +573,22 @@ export async function likeDrawing(
 			// Add like
 			console.log(`Adding like from ${userName}`);
 			updatedLikes = [...currentLikes, userName];
+
+			// Add notification for the artist when someone likes their drawing
+			if (drawingData.artist) {
+				const artistUser = await getUser(drawingData.artist);
+				if (artistUser && artistUser.id) {
+					// userName is currently a name, so get the user by name to get their ID
+					const likingUser = await getUser(userName);
+					if (likingUser && likingUser.id) {
+						addNotification(
+							likingUser.id, // ID of the user who liked the drawing
+							drawingId,
+							NotificationAction.like,
+						);
+					}
+				}
+			}
 		}
 
 		console.log(`Updated likes:`, updatedLikes);
@@ -534,6 +647,7 @@ export async function generateRandomUsers(count: number = 20): Promise<void> {
 				id: userRef.id,
 				dailyRewards: [],
 				upgrades: [],
+				notifications: [],
 			};
 
 			await setDocWithMiddleware(userRef, newUser);
@@ -954,6 +1068,171 @@ export async function getGame(gameId: string): Promise<Game | null> {
 		return null;
 	} catch (error) {
 		console.error('Error getting game:', error);
+		return null;
+	}
+}
+
+/**
+ * Mark a notification as read for a user
+ */
+export async function markNotificationRead(
+	userId: string,
+	notificationId: string,
+): Promise<void> {
+	const userRef = doc(userCollection, userId);
+	const userDoc = await getDoc(userRef);
+	if (!userDoc.exists()) return;
+	const userData = userDoc.data() as Omit<User, 'id'>;
+	const notifications = Array.isArray(userData.notifications)
+		? userData.notifications
+		: [];
+	const updatedNotifications = notifications.map((n: any) =>
+		n.id === notificationId ? { ...n, read: true } : n,
+	);
+	await updateDoc(userRef, { notifications: updatedNotifications });
+}
+
+/**
+ * Lowercase all user names in the database and update corresponding game references
+ */
+export async function lowercaseAllUserNames(): Promise<void> {
+	try {
+		// Get all users
+		const userSnapshot = await getDocs(userCollection);
+		const batch = writeBatch(fireStore);
+		let updateCount = 0;
+
+		// First pass: Update all user names to lowercase
+		for (const userDoc of userSnapshot.docs) {
+			const userData = userDoc.data() as User;
+			const originalName = userData.name;
+			const lowercaseName = originalName.toLowerCase();
+
+			if (originalName !== lowercaseName) {
+				batch.update(doc(userCollection, userDoc.id), { name: lowercaseName });
+				updateCount++;
+			}
+		}
+
+		// Commit user updates
+		if (updateCount > 0) {
+			await batch.commit();
+			console.log(`Updated ${updateCount} user names to lowercase`);
+		}
+
+		// Second pass: Update all games to use lowercase names
+		const gamesSnapshot = await getDocs(gameCollection);
+		const gameBatch = writeBatch(fireStore);
+		let gameUpdateCount = 0;
+
+		for (const gameDoc of gamesSnapshot.docs) {
+			const gameData = gameDoc.data() as Game;
+			const originalUsers = gameData.users;
+			const lowercaseUsers = originalUsers.map((name) => name.toLowerCase());
+
+			if (JSON.stringify(originalUsers) !== JSON.stringify(lowercaseUsers)) {
+				gameBatch.update(doc(gameCollection, gameDoc.id), {
+					users: lowercaseUsers,
+				});
+				gameUpdateCount++;
+			}
+		}
+
+		// Commit game updates
+		if (gameUpdateCount > 0) {
+			await gameBatch.commit();
+			console.log(`Updated ${gameUpdateCount} games with lowercase user names`);
+		}
+
+		// Reset games loaded state to trigger refresh
+		gamesLoaded.set(false);
+
+		// Show success message
+		showSuccessToast(
+			`Updated ${updateCount} users and ${gameUpdateCount} games`,
+		);
+	} catch (error) {
+		console.error('Error updating names to lowercase:', error);
+		throw error;
+	}
+}
+
+export async function getUserById(id: string): Promise<User | null> {
+	try {
+		const userDoc = await getDoc(doc(userCollection, id));
+		if (userDoc.exists()) {
+			const userData = userDoc.data() as Omit<User, 'id'>;
+			const user = { ...userData, id: userDoc.id } as User;
+			allUsers.update((users) => ({ ...users, [user.id]: user }));
+			return user;
+		}
+		return null;
+	} catch (error) {
+		console.error('Error getting user by ID:', error);
+		return null;
+	}
+}
+
+/**
+ * Get a user by ID or name
+ */
+export async function getUserByIdOrName(
+	identifier: string,
+): Promise<User | null> {
+	try {
+		// Try fetching by ID first
+		let userDoc = await getDoc(doc(userCollection, identifier));
+		if (userDoc.exists()) {
+			const userData = userDoc.data() as Omit<User, 'id'>;
+			const user = { ...userData, id: userDoc.id } as User;
+			allUsers.update((users) => ({
+				...users,
+				[user.name]: user,
+				[user.id]: user,
+			}));
+			return user;
+		}
+
+		// If not found by ID, try fetching by name (original case)
+		let userSnapshot = await getDocs(
+			query(userCollection, where('name', '==', identifier)),
+		);
+		if (!userSnapshot.empty) {
+			const userFoundDoc = userSnapshot.docs[0];
+			const userData = userFoundDoc.data() as Omit<User, 'id'>;
+			const user = { ...userData, id: userFoundDoc.id } as User;
+			allUsers.update((users) => ({
+				...users,
+				[user.name]: user,
+				[user.id]: user,
+			}));
+			return user;
+		}
+
+		// If not found by original case name, try lowercase version of identifier,
+		// assuming names in DB might be consistently lowercase.
+		const lowerIdentifier = identifier.toLowerCase();
+		if (identifier !== lowerIdentifier) {
+			// Only query if different to avoid re-querying if already lowercase
+			userSnapshot = await getDocs(
+				query(userCollection, where('name', '==', lowerIdentifier)),
+			);
+			if (!userSnapshot.empty) {
+				const userFoundDoc = userSnapshot.docs[0];
+				const userData = userFoundDoc.data() as Omit<User, 'id'>;
+				const user = { ...userData, id: userFoundDoc.id } as User;
+				allUsers.update((users) => ({
+					...users,
+					[user.name]: user,
+					[user.id]: user,
+				}));
+				return user;
+			}
+		}
+
+		return null;
+	} catch (error) {
+		console.error('Error getting user by ID or name:', error);
 		return null;
 	}
 }

@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { addComment, getRecentDrawings, likeDrawing } from './Firebase';
+	import {
+		addComment,
+		getRecentDrawings,
+		likeDrawing,
+		getDrawingsForGame,
+	} from './Firebase';
 	import type { Drawing } from '../types';
 	import { getHint, getSuperHint } from './utils';
 	import coinPng from '../assets/coin.png';
@@ -16,6 +21,7 @@
 		query,
 		orderBy,
 		limit,
+		where,
 	} from 'firebase/firestore';
 
 	let drawings: Drawing[] = [];
@@ -29,13 +35,21 @@
 	let screenshotFilename = '';
 
 	export let navigate: (page: string) => void;
+	export let drawingId: string | null = null;
 
 	// Load drawings and set up subscriptions
 	onMount(async () => {
 		console.log('Feed mounted');
 		try {
 			// Initial load of drawings
-			drawings = await getRecentDrawings();
+			if (drawingId) {
+				// If drawingId is provided, only load that specific drawing
+				const specificDrawings = await getDrawingsForGame(drawingId);
+				drawings = specificDrawings;
+			} else {
+				// Otherwise load recent drawings as before
+				drawings = await getRecentDrawings();
+			}
 			console.log('Drawings loaded', drawings);
 
 			// Set up real-time subscriptions for each drawing's game
@@ -58,7 +72,32 @@
 		unsubscribes.forEach((unsubscribe) => unsubscribe());
 		unsubscribes = [];
 
-		// Subscribe to the drawings collection with a query for recent drawings
+		// If we have a specific drawingId, only subscribe to that drawing
+		if (drawingId) {
+			const drawingQuery = query(
+				collection(firestore, 'drawings'),
+				where('id', '==', drawingId),
+				limit(1),
+			);
+
+			const unsubscribe = onSnapshot(
+				drawingQuery,
+				(snapshot) => {
+					drawings = snapshot.docs.map((doc) => ({
+						...doc.data(),
+						id: doc.id,
+					})) as Drawing[];
+				},
+				(error) => {
+					console.error('Error in drawing subscription:', error);
+				},
+			);
+
+			unsubscribes.push(unsubscribe);
+			return;
+		}
+
+		// Otherwise subscribe to all recent drawings as before
 		const drawingsQuery = query(
 			collection(firestore, 'drawings'),
 			orderBy('createdAt', 'desc'),
@@ -68,7 +107,6 @@
 		const unsubscribe = onSnapshot(
 			drawingsQuery,
 			(snapshot) => {
-				// Update drawings array with the latest data
 				drawings = snapshot.docs.map((doc) => ({
 					...doc.data(),
 					id: doc.id,
@@ -91,7 +129,7 @@
 		if (user) {
 			try {
 				const commentText = commentDraft.trim(); // Store the comment text before clearing
-				addComment(drawingId, commentText, user.name);
+				addComment(drawingId, commentText, user.name, user.id);
 				commentDraft = '';
 				// No need to manually update the drawing array
 				// The Firestore subscription will handle that
@@ -477,9 +515,11 @@
 		<div class="flex flex-col gap-4">
 			{#each drawings as drawing, i}
 				{#if drawing.data && drawing.data.length > 10}
+					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<!-- svelte-ignore a11y-click-events-have-key-events -->
 					<div
 						id={`drawing-card-${i}`}
-						class="bg-white/90 p-1 relative rounded-lg w-full max-w-[min(90vw,400px)] flex flex-col items-center justify-center mx-auto border-2 border-primary"
+						class="bg-white/90 p-1 relative rounded-lg w-full max-w-[min(90vw,400px)] flex flex-col items-center justify-center mx-auto border-2 border-primary cursor-pointer"
 					>
 						<div class="flex flex-row gap-1 absolute top-2 right-2">
 							{#each Array(drawing.coins) as _}
@@ -540,6 +580,7 @@
 						</div>
 
 						<!-- Screenshot button - moved to top right but below coins -->
+						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<div
 							class="absolute top-10 right-2 flex items-center gap-1 cursor-pointer bg-white/80 rounded-full p-1 z-10"
 							on:click|stopPropagation={() => captureScreenshot(i)}
@@ -571,10 +612,21 @@
 							Copied!
 						</div>
 
+						<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 						<img
 							src={`${drawing.data}`}
 							class="w-full h-full object-contain"
 							alt="Drawing"
+							on:click={() => {
+								// Only navigate if we're not already viewing a single drawing
+								if (!drawingId) {
+									const params = new URLSearchParams(window.location.search);
+									params.set('drawing', drawing.id ?? '');
+									window.history.pushState({}, '', `?${params.toString()}`);
+									// Force a page reload to trigger the route change
+									window.location.reload();
+								}
+							}}
 						/>
 
 						<p class="text-lg text-center py-2 align-middle items-center">
