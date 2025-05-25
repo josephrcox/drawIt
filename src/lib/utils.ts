@@ -1,20 +1,33 @@
-import type { Drawing, Game, User, WordOptions } from '../types';
-import { addcoins, updateGame, getUser, loadWords } from './Firebase';
+import {
+	UserUpgrade,
+	type Drawing,
+	type Game,
+	type User,
+	type WordOptions,
+} from '../types';
+import {
+	addcoins,
+	updateGame,
+	getUser,
+	loadWords,
+	getDrawingsForGame,
+	updateDrawing,
+	drawingCollection,
+	getGame,
+} from './Firebase';
+import { doc as firebaseDoc, setDoc } from 'firebase/firestore';
 import { showSuccessToast } from './notifications';
-import { words } from './words';
+import { words as defaultWords } from './words';
 
 /**
- * Check if it's a user's turn
+ * Check if it's the user's turn to guess. (Not to draw)
  */
-export function isUsersTurn(game: Game, user: string): boolean {
-	for (const drawing of game.drawings) {
-		if (!drawing.guessed) {
-			if (drawing.artist === user) {
-				return true;
-			}
-		}
-	}
-	return false;
+export function isUsersTurnToGuess(
+	currentDrawing: Drawing | null,
+	currentUser: string,
+): boolean {
+	if (!currentDrawing) return false; // No active drawing, so not turn to guess
+	return currentDrawing.artist !== currentUser && !currentDrawing.guessed;
 }
 
 export async function getUserSpan(
@@ -26,93 +39,119 @@ export async function getUserSpan(
 }
 
 /**
- * Get the current active drawing in a game
+ * Get the current active (un-guessed) drawing from a list of drawings.
+ * Drawings should be pre-sorted if a specific order (e.g., latest) is critical before calling this.
+ * Typically, the latest un-guessed drawing is considered current.
  */
-export function getCurrentDrawing(
-	game: Game,
-	currentUser: string,
-): Drawing | null {
-	const drawing = game.drawings.filter((drawing) => !drawing.guessed)[0];
+export function getCurrentDrawing(drawings: Drawing[]): Drawing | null {
+	if (!drawings || drawings.length === 0) return null;
+	// Find the first un-guessed drawing. Assumes drawings are sorted by creation desc or originalIndex asc.
+	// Or, more robustly, sort here if not guaranteed by caller
+	const sortedDrawings = [...drawings].sort((a, b) => {
+		const dateA =
+			a.createdAt instanceof Date
+				? a.createdAt.getTime()
+				: new Date(a.createdAt as any).getTime();
+		const dateB =
+			b.createdAt instanceof Date
+				? b.createdAt.getTime()
+				: new Date(b.createdAt as any).getTime();
+		return dateB - dateA; // Most recent first
+	});
+	const drawing = sortedDrawings.find((d) => !d.guessed);
 	return drawing || null;
 }
 
 /**
- * Submit a guess for a drawing
- * - Updates the game in Firestore
- * - Adds coins to the user if correct
+ * Submit a guess for a drawing.
  */
 export async function submitGuess(
-	game: Game,
+	gameId: string, // For context, e.g. if triggering word regeneration for the game
+	currentDrawing: Drawing,
 	currentUser: User,
 	guess: string,
-) {
-	const currentDrawing = getCurrentDrawing(game, currentUser.name);
-	if (!currentDrawing) {
-		return;
+): Promise<boolean> {
+	if (!currentDrawing || !currentDrawing.id) {
+		console.error('submitGuess: Invalid currentDrawing object or missing ID.');
+		return false;
 	}
 
-	// Normalize the guess and word for case-insensitive comparison
 	const normalizedGuess = guess.toLowerCase().trim();
 	const normalizedWord = currentDrawing.secretWord.toLowerCase().trim();
 
 	let isCorrect = false;
+	const updates: Partial<Drawing> = {};
 
 	if (normalizedGuess === normalizedWord) {
-		// Correct guess!
 		isCorrect = true;
-		currentDrawing.guessed = true;
-		currentDrawing.guessedBy = currentUser.name;
+		updates.guessed = true;
+		updates.guessedBy = currentUser.name;
+		console.log('Correct guess! Setting updates:', updates);
 
-		// Store a reference to the current user before adding coins
-		const currentUserRef = { ...currentUser };
+		// Make addcoins non-blocking for the UI transition
+		addcoins(currentUser.name, currentDrawing.coins).catch((error) => {
+			console.error(
+				`Error adding coins to guesser ${currentUser.name}:`,
+				error,
+			);
+		});
+		addcoins(currentDrawing.artist, currentDrawing.coins).catch((error) => {
+			console.error(
+				`Error adding coins to artist ${currentDrawing.artist}:`,
+				error,
+			);
+		});
 
-		// Add coins to the user
-		await addcoins(currentUser.name, currentDrawing.coins);
-		await addcoins(currentDrawing.artist, currentDrawing.coins);
+		let moreWordOptions = currentUser.upgrades?.includes(
+			UserUpgrade.MoreWordOptions,
+		);
 
-		// Show success toast
 		showSuccessToast(
 			`It was ${currentDrawing.secretWord}! You both get ${currentDrawing.coins} coins!`,
 		);
-
-		// Generate new word options for the next drawer
-		await getRandomWords(3, game);
-	} else if (!currentDrawing.guesses.includes(guess)) {
-		// Add to the guesses only if it's a new guess
-		currentDrawing.guesses.push(guess);
+		// After a correct guess, new word options might be needed for the *game*.
+		// These are critical for the next step, so await them.
+		await getRandomWords(moreWordOptions ? 5 : 3, gameId, true); // Pass gameId and force regeneration
+	} else {
+		const currentGuesses = currentDrawing.guesses || [];
+		if (!currentGuesses.includes(guess)) {
+			updates.guesses = [...currentGuesses, guess];
+		}
 	}
 
-	// Update game in Firestore
-	await updateGame(game);
+	if (Object.keys(updates).length > 0) {
+		console.log('Submitting updates to drawing:', updates);
+		await updateDrawing(currentDrawing.id, updates);
+	}
 
 	return isCorrect;
 }
 
 /**
- * Get random words for drawing options
+ * Get random words for drawing options.
+ * If gameId is provided, it fetches the game and updates its wordOptions.
  */
 export async function getRandomWords(
 	count: number,
-	game?: Game,
+	gameId?: string,
 	force: boolean = false,
 ): Promise<WordOptions[]> {
-	// If game has word options, return those
-	if (game?.wordOptions && game.wordOptions.length > 0 && !force) {
-		return game.wordOptions;
+	let game: Game | null = null;
+	if (gameId) {
+		game = await getGame(gameId);
+		if (game?.wordOptions && game.wordOptions.length > 0 && !force) {
+			return game.wordOptions;
+		}
 	}
 
-	const wordList: WordOptions[] = [];
+	const wordList: WordOptions[] = defaultWords.map((word) => ({
+		secretWord: word,
+		coins: 0,
+	}));
 
-	for (const word of words) {
-		wordList.push({
-			secretWord: word,
-			coins: 0,
-		});
-	}
-
-	let customWords = await loadWords();
+	const customWordsList = await loadWords();
 	wordList.push(
-		...customWords.map((word) => ({
+		...customWordsList.map((word) => ({
 			secretWord: word.word,
 			coins: 0,
 			createdBy: word.createdBy,
@@ -120,79 +159,130 @@ export async function getRandomWords(
 		})),
 	);
 
-	// Return random unique words with coins based on index
-	const randomWords = wordList.sort(() => Math.random() - 0.5).slice(0, count);
-	// Make it so the coins are based on the index
-	for (let i = 0; i < randomWords.length; i++) {
-		randomWords[i].coins = i + 1;
-	}
+	const randomWords = [...wordList]
+		.sort(() => Math.random() - 0.5)
+		.slice(0, count);
+	randomWords.forEach((word, i) => {
+		word.coins = i + 1;
+	});
 
-	// If game is provided, update it with the new word options
-	if (game) {
-		game.wordOptions = randomWords;
-		await updateGame(game);
+	if (gameId) {
+		// If gameId was provided, attempt to update its wordOptions
+		await updateGame({
+			id: gameId,
+			wordOptions: randomWords,
+		} as Partial<Game> as Game);
 	}
 
 	return randomWords;
 }
 
 /**
- * Select a word and clear word options
+ * Select a word and create a new drawing document.
+ * Also clears word options on the game.
  */
 export async function selectWord(
-	game: Game,
-	currentUser: string,
+	gameId: string,
+	currentUser: User,
 	word: WordOptions,
-) {
-	return word;
+	originalIndex: number, // The index this drawing would have had in the old array
+): Promise<Drawing | null> {
+	try {
+		const newDrawingRef = firebaseDoc(drawingCollection); // Get a new document reference
+		const newDrawing: Drawing = {
+			id: newDrawingRef.id, // Store the future ID
+			secretWord: word.secretWord,
+			coins: word.coins,
+			data: '', // Canvas data will be filled in later
+			artist: currentUser.name,
+			guessed: false,
+			guesses: [],
+			createdAt: new Date(),
+			guessedBy: '',
+			hintPurchased: false,
+			superHintPurchased: false,
+			comments: [],
+			likes: [],
+			gameId: gameId,
+			originalIndex: originalIndex,
+			dataHash: '', // Will be set when actual data is submitted
+		};
+
+		// Note: We are NOT saving the drawing to Firestore here.
+		// This function now just prepares a drawing object.
+		// The actual save (setDoc) should happen after the user draws something.
+		// The GameScreen component will handle creating the drawing with canvas data.
+
+		// Clear word options on the game
+		await updateGame({ id: gameId, wordOptions: [] } as Partial<Game> as Game);
+
+		return newDrawing;
+	} catch (error) {
+		console.error('Error in selectWord:', error);
+		return null;
+	}
 }
 
 /**
- * Get the current game state for a user
+ * Get the current game state for a user.
  */
 export function getGameState(
-	game: Game,
+	gameUsers: string[],
+	drawings: Drawing[], // Assumes drawings are for the relevant game and sorted if necessary
 	currentUser: string,
 ): 'draw' | 'guess' | 'waiting' {
-	const currentDrawing = getCurrentDrawing(game, currentUser);
+	const currentDrawing = getCurrentDrawing(drawings); // Gets the latest un-guessed drawing
 
-	// If there's no current drawing, determine who should draw next
 	if (!currentDrawing) {
-		// If there are no drawings yet, first player draws
-		if (game.drawings.length === 0) {
-			return game.users[0] === currentUser ? 'draw' : 'waiting';
+		// No active drawing
+		if (drawings.length === 0) {
+			// No drawings at all, the first user in the list draws
+			return gameUsers[0] === currentUser ? 'draw' : 'waiting';
 		}
 
-		// Get the last drawing that was guessed
-		const lastGuessedDrawing = [...game.drawings]
-			.reverse()
-			.find((drawing) => drawing.guessed);
+		// All drawings are guessed, determine who draws next
+		// Sort drawings by originalIndex (or createdAt as fallback) to find the chronologically last one
+		const sortedDrawings = [...drawings].sort((a, b) => {
+			const indexA = a.originalIndex ?? Number.MAX_SAFE_INTEGER;
+			const indexB = b.originalIndex ?? Number.MAX_SAFE_INTEGER;
+			if (indexA !== indexB) return indexA - indexB;
+			const dateA =
+				a.createdAt instanceof Date
+					? a.createdAt.getTime()
+					: new Date(a.createdAt as any).getTime();
+			const dateB =
+				b.createdAt instanceof Date
+					? b.createdAt.getTime()
+					: new Date(b.createdAt as any).getTime();
+			return dateA - dateB;
+		});
+		const lastDrawing = sortedDrawings[sortedDrawings.length - 1];
 
-		if (!lastGuessedDrawing) {
-			// If no drawings have been guessed yet, first player draws
-			return game.users[0] === currentUser ? 'draw' : 'waiting';
+		if (!lastDrawing) {
+			// Should not happen if drawings.length > 0
+			return gameUsers[0] === currentUser ? 'draw' : 'waiting';
 		}
 
-		// Find the index of the last artist in the users array
-		const lastArtistIndex = game.users.indexOf(lastGuessedDrawing.artist);
-		// The next artist should be the other player
-		const nextArtistIndex = (lastArtistIndex + 1) % game.users.length;
-		const nextArtist = game.users[nextArtistIndex];
+		const lastArtistIndex = gameUsers.indexOf(lastDrawing.artist);
+		if (lastArtistIndex === -1) {
+			// Last artist not in current game users? Default to first player.
+			return gameUsers[0] === currentUser ? 'draw' : 'waiting';
+		}
+
+		const nextArtistIndex = (lastArtistIndex + 1) % gameUsers.length;
+		const nextArtist = gameUsers[nextArtistIndex];
 
 		return nextArtist === currentUser ? 'draw' : 'waiting';
 	}
 
-	// If there is a current drawing
+	// There is an active (un-guessed) drawing
 	if (currentDrawing.artist === currentUser) {
-		return 'waiting';
+		return 'waiting'; // User is the artist of the current un-guessed drawing
 	}
 
-	return 'guess';
+	return 'guess'; // User is not the artist, so they should guess
 }
 
-/**
- * Ensure a drawing has the hint fields
- */
 export function ensureDrawingHintFields(drawing: Drawing): Drawing {
 	return {
 		...drawing,
@@ -201,19 +291,12 @@ export function ensureDrawingHintFields(drawing: Drawing): Drawing {
 	};
 }
 
-/**
- * Get a hint for a drawing (word length)
- */
 export function getHint(drawing: Drawing): string {
 	return `The word is ${drawing.secretWord.length} letters long`;
 }
 
-/**
- * Get a superhint for a drawing (scrambled letters)
- */
 export function getSuperHint(drawing: Drawing): string {
 	const letters = drawing.secretWord.split('');
-	// Shuffle the letters
 	for (let i = letters.length - 1; i > 0; i--) {
 		const j = Math.floor(Math.random() * (i + 1));
 		[letters[i], letters[j]] = [letters[j], letters[i]];
@@ -224,64 +307,39 @@ export function getSuperHint(drawing: Drawing): string {
 function toTimestamp(val: any): number {
 	if (!val) return 0;
 	if (val instanceof Date) return val.getTime();
-	if (typeof val.toDate === 'function') return val.toDate().getTime(); // Firestore Timestamp
+	if (typeof val.toDate === 'function') return val.toDate().getTime();
 	if (typeof val === 'string') return new Date(val).getTime();
 	return new Date(val).getTime();
 }
 
-/**
- * Purchase a hint for a drawing
- */
 export async function purchaseHint(
-	game: Game,
-	drawing: Drawing,
+	drawingId: string,
 	user: User,
 ): Promise<boolean> {
-	if (user.coins < 5 || drawing.hintPurchased) return false;
-
-	// Update the drawing in the game
-	const drawingIndex = game.drawings.findIndex(
-		(d) =>
-			d.artist === drawing.artist &&
-			toTimestamp(d.createdAt) === toTimestamp(drawing.createdAt),
-	);
-
-	if (drawingIndex === -1) return false;
-
-	game.drawings[drawingIndex] = {
-		...drawing,
-		hintPurchased: true,
-	};
-
-	await updateGame(game);
-	return true;
+	if (!drawingId) {
+		console.error('purchaseHint: drawingId is required.');
+		return false;
+	}
+	// Caller should ensure user has enough coins & drawing.hintPurchased is false
+	const success = await updateDrawing(drawingId, { hintPurchased: true });
+	if (success) {
+		// Coin deduction should be handled by the caller after successful purchase
+	}
+	return success;
 }
 
-/**
- * Purchase a super hint for a drawing
- */
 export async function purchaseSuperHint(
-	game: Game,
-	drawing: Drawing,
+	drawingId: string,
 	user: User,
+	// Caller ensures drawing.hintPurchased is true & user has coins & drawing.superHintPurchased is false
 ): Promise<boolean> {
-	if (user.coins < 10 || !drawing.hintPurchased || drawing.superHintPurchased)
+	if (!drawingId) {
+		console.error('purchaseSuperHint: drawingId is required.');
 		return false;
-
-	// Update the drawing in the game
-	const drawingIndex = game.drawings.findIndex(
-		(d) =>
-			d.artist === drawing.artist &&
-			toTimestamp(d.createdAt) === toTimestamp(drawing.createdAt),
-	);
-
-	if (drawingIndex === -1) return false;
-
-	game.drawings[drawingIndex] = {
-		...drawing,
-		superHintPurchased: true,
-	};
-
-	await updateGame(game);
-	return true;
+	}
+	const success = await updateDrawing(drawingId, { superHintPurchased: true });
+	if (success) {
+		// Coin deduction should be handled by the caller after successful purchase
+	}
+	return success;
 }

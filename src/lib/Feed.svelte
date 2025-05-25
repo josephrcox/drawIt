@@ -13,6 +13,9 @@
 		onSnapshot,
 		getFirestore,
 		collection,
+		query,
+		orderBy,
+		limit,
 	} from 'firebase/firestore';
 
 	let drawings: Drawing[] = [];
@@ -49,59 +52,37 @@
 		unsubscribes.forEach((unsubscribe) => unsubscribe());
 	});
 
-	// Set up Firestore subscriptions for each drawing's game
+	// Set up Firestore subscriptions for each drawing
 	function setupSubscriptions() {
 		// Clear existing subscriptions
 		unsubscribes.forEach((unsubscribe) => unsubscribe());
 		unsubscribes = [];
 
-		// Create a unique set of game IDs to avoid duplicate subscriptions
-		const gameIds = new Set(
-			drawings.map((drawing) => drawing.gameId).filter(Boolean),
+		// Subscribe to the drawings collection with a query for recent drawings
+		const drawingsQuery = query(
+			collection(firestore, 'drawings'),
+			orderBy('createdAt', 'desc'),
+			limit(50),
 		);
 
-		console.log('Setting up subscriptions for game IDs:', [...gameIds]);
+		const unsubscribe = onSnapshot(
+			drawingsQuery,
+			(snapshot) => {
+				// Update drawings array with the latest data
+				drawings = snapshot.docs.map((doc) => ({
+					...doc.data(),
+					id: doc.id,
+				})) as Drawing[];
+			},
+			(error) => {
+				console.error('Error in drawings subscription:', error);
+			},
+		);
 
-		// Subscribe to each game
-		gameIds.forEach((gameId) => {
-			if (!gameId) return;
-
-			const gameRef = doc(collection(firestore, 'games'), gameId);
-			const unsubscribe = onSnapshot(
-				gameRef,
-				(doc) => {
-					if (doc.exists()) {
-						const gameData = doc.data();
-						console.log(`Game data updated for ${gameId}:`, gameData);
-
-						// Update drawings that belong to this game
-						drawings = drawings.map((drawing) => {
-							if (drawing.gameId === gameId && drawing.index !== undefined) {
-								console.log(
-									`Updating drawing ${drawing.index} for game ${gameId}`,
-								);
-								// Return the updated drawing from the game data
-								return {
-									...gameData.drawings[drawing.index],
-									gameId,
-									index: drawing.index,
-									guessedBy: drawing.guessedBy,
-								};
-							}
-							return drawing;
-						});
-					}
-				},
-				(error) => {
-					console.error(`Error in game subscription for ${gameId}:`, error);
-				},
-			);
-
-			unsubscribes.push(unsubscribe);
-		});
+		unsubscribes.push(unsubscribe);
 	}
 
-	async function createComment(gameId: string, drawingIndex: number) {
+	async function createComment(drawingId: string) {
 		if (commentDraft.trim() === '') {
 			return;
 		}
@@ -110,7 +91,7 @@
 		if (user) {
 			try {
 				const commentText = commentDraft.trim(); // Store the comment text before clearing
-				addComment(gameId, drawingIndex, commentText, user.name);
+				addComment(drawingId, commentText, user.name);
 				commentDraft = '';
 				// No need to manually update the drawing array
 				// The Firestore subscription will handle that
@@ -120,11 +101,11 @@
 		}
 	}
 
-	async function toggleLike(gameId: string, drawingIndex: number) {
+	async function toggleLike(drawingId: string) {
 		const user = $currentUser;
 		if (user) {
 			try {
-				await likeDrawing(gameId, drawingIndex, user.name);
+				await likeDrawing(drawingId, user.name);
 				// No need to manually update UI, Firestore subscription handles it
 			} catch (error) {
 				console.error('Error liking drawing:', error);
@@ -283,7 +264,7 @@
 			ctx.font = '16px Outfit, sans-serif';
 			ctx.fillStyle = TEXT_COLOR;
 			let guessText = '';
-			if (drawing.guesses && drawing.guesses.length > 0) {
+			if (drawing.guessedBy && drawing.guesses.length > 0) {
 				guessText = `${drawing.guessedBy} ${!drawing.guessed ? 'has ' : ''}guessed: ${drawing.guesses.join(', ')}`;
 			} else {
 				guessText = `${drawing.guessedBy} is thinking...`;
@@ -507,13 +488,14 @@
 						</div>
 
 						<!-- Like button moved to top left -->
+						<!-- svelte-ignore a11y-click-events-have-key-events -->
+						<!-- svelte-ignore a11y-no-static-element-interactions -->
 						<div
 							class="absolute top-2 left-2 flex items-center gap-1 cursor-pointer bg-white/80 rounded-full p-1 z-20"
 							on:click|stopPropagation={() => {
 								console.log('Drawing object:', drawing);
-								console.log('gameId:', drawing.gameId, 'index:', drawing.index);
-								if (drawing.gameId && drawing.index !== undefined) {
-									toggleLike(drawing.gameId, drawing.index);
+								if (drawing.id) {
+									toggleLike(drawing.id);
 								} else {
 									alert('Error: gameId or index is missing');
 								}
@@ -614,23 +596,26 @@
 						<p
 							class="text-[0.8rem] text-center align-middle items-center w-3/4"
 						>
-							{#if drawing.guesses && drawing.guesses.length > 0}
+							{#if drawing.guessedBy}
 								<span class="font-semibold">
 									{drawing.guessedBy}
 								</span>
 								{#if !drawing.guessed}
 									has
 								{/if}
-								guessed:
-								{#each drawing.guesses as guess, i}
-									<span class="italic"
-										>{guess}{i < drawing.guesses.length - 1 ? ', ' : ''}</span
-									>
-								{/each}
+								guessed
+								{#if drawing.guesses && drawing.guesses.length > 0}
+									{#each drawing.guesses as guess, i}
+										<span class="italic"
+											>{guess}{i < drawing.guesses.length - 1 ? ', ' : ''}</span
+										>
+									{/each}
+								{:else}
+									it!
+								{/if}
 							{:else}
 								<span class="italic">
-									<span class="font-semibold">{drawing.guessedBy}</span>
-									is thinking...
+									<!-- TODO: Add guessedBy user even if they haven't guessed. -->
 								</span>
 							{/if}
 						</p>
@@ -656,15 +641,14 @@
 										bind:value={commentDraft}
 										on:keydown={(e) => {
 											if (e.key === 'Enter') {
-												createComment(drawing.gameId ?? '', drawing.index ?? 0);
+												createComment(drawing.id ?? '');
 											}
 										}}
 									/>
 									<button
 										class="btn btn-secondary btn-sm"
 										disabled={commentDraft.trim() === ''}
-										on:click={() =>
-											createComment(drawing.gameId ?? '', drawing.index ?? 0)}
+										on:click={() => createComment(drawing.id ?? '')}
 									>
 										Comment
 									</button>

@@ -17,6 +17,10 @@ import {
 	writeBatch,
 	arrayUnion,
 	deleteDoc,
+	limit,
+	orderBy,
+	getCountFromServer,
+	FieldPath,
 } from 'firebase/firestore';
 import { get } from 'svelte/store';
 import type { Game, Drawing, User, Word, UserUpgrade } from '../types';
@@ -36,7 +40,7 @@ import { showSuccessToast } from './notifications';
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
+export const firebaseConfig = {
 	apiKey: 'AIzaSyCTe1si_Cg2Pkl2X77JpscYfW6KajberCM',
 	authDomain: 'drawit-1f620.firebaseapp.com',
 	projectId: 'drawit-1f620',
@@ -91,29 +95,29 @@ export async function loadUsers(userNames: string[]): Promise<void> {
 }
 
 export async function addComment(
-	gameId: string,
-	drawingIndex: number,
+	drawingId: string,
 	comment: string,
 	user: string,
-): Promise<Drawing> {
-	const gameRef = doc(gameCollection, gameId);
-	const game = await getDoc(gameRef);
-	const gameData = game.data() as Game;
+): Promise<Drawing | null> {
+	try {
+		// get doc  with the id
+		const ddoc = await getDoc(doc(drawingCollection, drawingId));
+		if (!ddoc.exists()) {
+			console.error(`Drawing not found for ${drawingId}`);
+			return null;
+		}
+		const ddata = ddoc.data() as Drawing;
 
-	gameData.drawings[drawingIndex].comments.push({
-		content: comment,
-		createdBy: user,
-	});
+		const newComment = { content: comment, createdBy: user };
+		const updatedComments = [...(ddata.comments || []), newComment];
 
-	await updateDoc(gameRef, {
-		drawings: gameData.drawings,
-	});
+		await updateDoc(ddoc.ref, { comments: updatedComments });
 
-	return gameData.drawings[drawingIndex];
-
-	// await updateDoc(drawingRef, {
-	// 	comments: arrayUnion(comment),
-	// });
+		return { ...ddata, comments: updatedComments, id: ddoc.id };
+	} catch (error) {
+		console.error('Error adding comment:', error);
+		return null;
+	}
 }
 
 export async function loadWords(): Promise<Word[]> {
@@ -170,12 +174,7 @@ export async function initializeAuth() {
  */
 export async function createUser(name: string): Promise<User> {
 	try {
-		// Ensure we have an authenticated user
-		const currentAuth = get(authUser);
-		if (!currentAuth) {
-			await initializeAuth();
-		}
-
+		// Check if user already exists
 		const userSnapshot = await getDocs(userCollection);
 		const userFound = userSnapshot.docs.find((doc) => doc.data().name === name);
 
@@ -192,15 +191,13 @@ export async function createUser(name: string): Promise<User> {
 			return user;
 		}
 
-		const auth = get(authUser);
-		if (!auth) throw new Error('No authenticated user');
-
-		const userRef = doc(userCollection, auth.uid);
+		// Create new user
+		const userRef = doc(userCollection);
 		const newUser: User = {
 			name,
 			coins: 0,
 			createdAt: new Date(),
-			id: auth.uid,
+			id: userRef.id,
 			dailyRewards: [],
 			upgrades: [],
 		};
@@ -345,6 +342,7 @@ export async function createGame(users: string[]): Promise<Game> {
 		createdAt: new Date(),
 		drawings: [],
 		wordOptions: [],
+		drawingsCount: 0,
 	} as Game;
 
 	await setDocWithMiddleware(gameRef, game);
@@ -363,11 +361,23 @@ export async function updateGame(game: Game) {
 
 	try {
 		const gameRef = doc(gameCollection, game.id);
-		await updateDoc(gameRef, {
-			drawings: game.drawings,
-			wordOptions: game.wordOptions,
-		});
-		return game;
+		// Only update game-specific fields. Drawings are handled separately.
+		const gameDataToUpdate: Partial<Game> = {};
+		if (game.wordOptions !== undefined) {
+			gameDataToUpdate.wordOptions = game.wordOptions;
+		}
+		if (game.users !== undefined) {
+			gameDataToUpdate.users = game.users;
+		}
+		if (game.drawingsCount !== undefined) {
+			gameDataToUpdate.drawingsCount = game.drawingsCount;
+		}
+		// Add any other game-specific, non-drawing fields here if necessary
+
+		if (Object.keys(gameDataToUpdate).length > 0) {
+			await updateDoc(gameRef, gameDataToUpdate);
+		}
+		return game; // Return the game object passed in, potentially with local modifications
 	} catch (error) {
 		console.error('Error updating game:', error);
 		return game;
@@ -434,81 +444,45 @@ export async function addcoins(username: string, coins: number) {
  * Add or remove a like from a drawing
  */
 export async function likeDrawing(
-	gameId: string,
-	drawingIndex: number,
+	drawingId: string,
 	userName: string,
 ): Promise<boolean> {
 	try {
-		console.log(
-			`likeDrawing called with gameId: ${gameId}, drawingIndex: ${drawingIndex}, userName: ${userName}`,
+		const drawingsQuery = query(
+			drawingCollection,
+			where('id', '==', drawingId),
+			limit(1),
 		);
+		const drawingSnapshot = await getDocs(drawingsQuery);
 
-		if (!gameId || drawingIndex === undefined) {
-			console.error('Invalid gameId or drawingIndex', { gameId, drawingIndex });
+		if (drawingSnapshot.empty) {
+			console.error(`Drawing not found ${drawingId} to like.`);
 			return false;
 		}
 
-		const gameRef = doc(gameCollection, gameId);
-		console.log(`Getting game ref for ${gameId}`);
-		const game = await getDoc(gameRef);
-
-		if (!game.exists()) {
-			console.error('Game not found');
-			return false;
-		}
-
-		const gameData = game.data() as Game;
-		console.log(`Game data retrieved:`, gameData);
-
-		if (!gameData.drawings || !Array.isArray(gameData.drawings)) {
-			console.error('Game has no drawings array', gameData);
-			return false;
-		}
-
-		if (drawingIndex >= gameData.drawings.length) {
-			console.error(
-				`Drawing index out of bounds: ${drawingIndex}, max: ${
-					gameData.drawings.length - 1
-				}`,
-			);
-			return false;
-		}
-
-		const drawing = gameData.drawings[drawingIndex];
-
-		if (!drawing) {
-			console.error('Drawing not found');
-			return false;
-		}
+		const drawingDoc = drawingSnapshot.docs[0];
+		const drawingData = drawingDoc.data() as Drawing;
 
 		// Initialize likes array if it doesn't exist
-		if (!drawing.likes) {
-			drawing.likes = [];
-		}
+		const currentLikes = drawingData.likes || [];
+		let updatedLikes: string[];
 
-		console.log(`Current likes:`, drawing.likes);
-
-		// Toggle like: remove if already liked, add if not
-		const userLikedIndex = drawing.likes.indexOf(userName);
+		const userLikedIndex = currentLikes.indexOf(userName);
 		if (userLikedIndex >= 0) {
 			// Remove like
 			console.log(`Removing like from ${userName}`);
-			drawing.likes.splice(userLikedIndex, 1);
+			updatedLikes = currentLikes.filter((u) => u !== userName);
 		} else {
 			// Add like
 			console.log(`Adding like from ${userName}`);
-			drawing.likes.push(userName);
+			updatedLikes = [...currentLikes, userName];
 		}
 
-		console.log(`Updated likes:`, drawing.likes);
+		console.log(`Updated likes:`, updatedLikes);
 
-		// Update the game document
-		console.log(`Updating game document`);
-		await updateDoc(gameRef, {
-			drawings: gameData.drawings,
-		});
+		await updateDoc(drawingDoc.ref, { likes: updatedLikes });
 
-		console.log(`Like operation successful`);
+		console.log(`Like operation successful for drawing ${drawingDoc.id}`);
 		return true;
 	} catch (error) {
 		console.error('Error liking drawing:', error);
@@ -628,46 +602,23 @@ export async function loadGame(gameId: string): Promise<Game | null> {
  */
 export async function getRecentDrawings(): Promise<Drawing[]> {
 	try {
-		const gamesSnapshot = await getDocs(gameCollection);
-		const allDrawings: Drawing[] = [];
+		// Fetch drawings directly from the drawingCollection
+		// The 'index' field on these drawings is the originalIndex from the game
+		// The 'gameId' field is also present
+		const drawingsSnapshot = await getDocs(
+			query(drawingCollection, orderBy('createdAt', 'desc'), limit(50)),
+		);
 
-		// Collect all drawings from all games
-		gamesSnapshot.docs.forEach((doc) => {
-			const game = doc.data() as Game;
-			if (game.drawings && game.drawings.length > 0) {
-				// Add game ID to each drawing for reference
-				const drawingsWithGameId = game.drawings.map((drawing, index) => ({
-					...drawing,
-					gameId: doc.id,
-					index: index,
-				}));
-
-				for (const drawing of drawingsWithGameId) {
-					drawing.guessedBy =
-						game.users.find((user) => user !== drawing.artist) ?? '';
-				}
-				// .filter((drawing) => drawing.guessed === true);
-				allDrawings.push(...drawingsWithGameId);
-			}
+		const allDrawings: Drawing[] = drawingsSnapshot.docs.map((doc) => {
+			const drawing = doc.data() as Drawing;
+			// The drawing document should already have gameId, originalIndex (as 'index'), and 'guessedBy' if set.
+			// We might need to fetch game user list if the old `guessedBy` logic is critical.
+			// For now, assume `guessedBy` is the actual guesser or empty.
+			return { ...drawing, id: doc.id }; // Add document ID to the drawing object
 		});
 
-		// Sort drawings by createdAt date (most recent first)
-		const sortedDrawings = allDrawings.sort((a, b) => {
-			function toDate(val: any): Date {
-				if (!val) return new Date(0);
-				if (val instanceof Date) return val;
-				if (typeof val.toDate === 'function') return val.toDate(); // Firestore Timestamp
-				if (typeof val === 'string') return new Date(val);
-				return new Date(val);
-			}
-			const dateA = toDate(a.createdAt);
-			const dateB = toDate(b.createdAt);
-			return dateB.getTime() - dateA.getTime();
-		});
-		console.log(sortedDrawings);
-
-		// Return the 100 most recent drawings
-		return sortedDrawings.slice(0, 100);
+		console.log('Fetched recent drawings:', allDrawings);
+		return allDrawings;
 	} catch (error) {
 		console.error('Error fetching recent drawings:', error);
 		return [];
@@ -880,5 +831,129 @@ export async function initializeUserSession(): Promise<boolean> {
 	} catch (error) {
 		console.error('Error initializing user session:', error);
 		return false;
+	}
+}
+
+function migrateDrawings() {
+	throw new Error('Function not implemented.');
+}
+
+/**
+ * Get all drawings for a specific game ID
+ */
+export async function getDrawingsForGame(gameId: string): Promise<Drawing[]> {
+	try {
+		const q = query(
+			drawingCollection,
+			where('gameId', '==', gameId),
+			orderBy('createdAt', 'desc'),
+			limit(1),
+		);
+		const drawingsSnapshot = await getDocs(q);
+
+		const drawings = drawingsSnapshot.docs.map((doc) => {
+			const data = doc.data() as Omit<Drawing, 'id'>;
+			return { ...data, id: doc.id } as Drawing;
+		});
+
+		return drawings;
+	} catch (error) {
+		console.error(`Error fetching drawings for game ${gameId}:`, error);
+		return [];
+	}
+}
+
+export async function getDrawingsCountForGame(gameId: string): Promise<number> {
+	const q = query(drawingCollection, where('gameId', '==', gameId));
+	const countSnapshot = await getCountFromServer(q);
+	return countSnapshot.data().count;
+}
+
+/**
+ * Update specific fields of a drawing document
+ */
+export async function updateDrawing(
+	drawingId: string,
+	updates: Partial<Drawing>,
+): Promise<boolean> {
+	try {
+		console.log('Updating drawing with ID:', drawingId);
+		console.log('Updates being applied:', updates);
+		const drawingRef = doc(drawingCollection, drawingId);
+		await updateDoc(drawingRef, updates);
+		console.log('Successfully updated drawing:', drawingId);
+		return true;
+	} catch (error) {
+		console.error(`Error updating drawing ${drawingId}:`, error);
+		return false;
+	}
+}
+
+// --- SHA-256 Helper --- START ---
+// Uses Web Crypto API (available in modern Node.js 15+ and browsers)
+// For older Node.js, you might need to use the built-in 'crypto' module.
+export async function sha256(str: string): Promise<string> {
+	const buffer = new TextEncoder().encode(str);
+	const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+	const hashArray = Array.from(new Uint8Array(hashBuffer));
+	const hashHex = hashArray
+		.map((b) => b.toString(16).padStart(2, '0'))
+		.join('');
+	return hashHex;
+}
+// --- SHA-256 Helper --- END ---
+
+/**
+ * Create a new drawing document in the drawings collection
+ */
+export async function createNewDrawing(
+	drawingData: Drawing,
+): Promise<Drawing | null> {
+	try {
+		if (!drawingData.id) {
+			const newDocRef = doc(drawingCollection);
+			drawingData.id = newDocRef.id;
+		}
+		const finalDrawingId = drawingData.id as string;
+		const drawingRef = doc(drawingCollection, finalDrawingId);
+		await setDoc(drawingRef, drawingData);
+
+		// Increment drawingsCount on the game
+		if (drawingData.gameId) {
+			const gameRef = doc(gameCollection, drawingData.gameId);
+			const gameDoc = await getDoc(gameRef);
+			if (gameDoc.exists()) {
+				const game = gameDoc.data() as Game;
+				const currentCount = game.drawingsCount || 0;
+				await updateDoc(gameRef, { drawingsCount: currentCount + 1 });
+
+				// Update local allGames store if game is present
+				allGames.update((ags) => {
+					if (ags[drawingData.gameId!]) {
+						ags[drawingData.gameId!].drawingsCount = currentCount + 1;
+					}
+					return ags;
+				});
+			}
+		}
+
+		return { ...drawingData, id: finalDrawingId };
+	} catch (error) {
+		console.error('Error creating new drawing:', error);
+		return null;
+	}
+}
+
+export async function getGame(gameId: string): Promise<Game | null> {
+	try {
+		const gameRef = doc(gameCollection, gameId);
+		const gameDoc = await getDoc(gameRef);
+		if (gameDoc.exists()) {
+			return gameDoc.data() as Game;
+		}
+		return null;
+	} catch (error) {
+		console.error('Error getting game:', error);
+		return null;
 	}
 }

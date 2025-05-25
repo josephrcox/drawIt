@@ -61,16 +61,23 @@
 		const params = new URLSearchParams(window.location.search);
 		const gameId = $currentGame?.id;
 
-		if (gameId) {
-			params.set('currentGame', gameId);
-		} else {
+		if (page === 'home') {
+			// Clear current game when navigating to home
+			$currentGame = null;
 			params.delete('currentGame');
-		}
-
-		if (page !== 'home') {
-			params.set('page', page);
-		} else {
 			params.delete('page');
+		} else {
+			if (gameId) {
+				params.set('currentGame', gameId);
+			} else {
+				params.delete('currentGame');
+			}
+
+			if (page !== 'home') {
+				params.set('page', page);
+			} else {
+				params.delete('page');
+			}
 		}
 
 		const queryString = params.toString();
@@ -96,7 +103,7 @@
 		<!-- svelte-ignore missing-declaration -->
 		<div class="w-full max-w-md mx-auto px-4">
 			{#if $currentGame}
-				<GameScreen />
+				<GameScreen {navigate} />
 			{:else if currentPage === 'home'}
 				<Home {navigate} />
 			{:else if currentPage === 'new'}

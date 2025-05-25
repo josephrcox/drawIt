@@ -14,6 +14,7 @@ export type localUserReference = {
 };
 
 export type Drawing = {
+	id?: string; // Firestore document ID
 	secretWord: string;
 	coins: number;
 	data: string; // base64 encoded image
@@ -27,7 +28,8 @@ export type Drawing = {
 	comments: Comment[];
 	likes: string[]; // Player.name
 	gameId?: string;
-	index?: number;
+	originalIndex?: number; // Renamed from index for clarity with migration
+	dataHash?: string; // For de-duplication
 };
 
 export type Comment = {
@@ -43,9 +45,9 @@ export enum UserUpgrade {
 export type Game = {
 	id: string;
 	users: string[]; // user names
-	drawings: Drawing[]; // new drawing ids are pushed and then pulled from the drawings collection
 	createdAt: Date;
 	wordOptions: WordOptions[];
+	drawingsCount?: number;
 };
 
 export type WordOptions = {

@@ -3,6 +3,8 @@
 	import { addcoins, getUsers } from './Firebase';
 	import { onMount } from 'svelte';
 	import type { User } from '../types';
+	import { migrateDrawings } from '../../migration';
+	import { removeDrawingsFieldFromGames } from '../../removeDrawingsField';
 
 	let isOpen = false;
 	let users: User[] = [];
@@ -99,6 +101,15 @@
 				</button>
 				<button class="btn btn-secondary" on:click={loadUsers}>
 					Refresh Users
+				</button>
+				<button class="btn btn-secondary" on:click={migrateDrawings}>
+					Migrate Drawings
+				</button>
+				<button
+					class="btn btn-secondary"
+					on:click={removeDrawingsFieldFromGames}
+				>
+					Remove Drawings Field From Games
 				</button>
 			</div>
 

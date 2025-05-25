@@ -2,6 +2,7 @@
 
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { get } from 'svelte/store';
 	import {
 		currentGame,
 		currentUser,
@@ -22,46 +23,179 @@
 		deleteGame,
 		initializeUserSession,
 		initializeAuth,
+		getDrawingsForGame,
+		getDrawingsCountForGame,
+		updateGame,
 	} from './lib/Firebase';
 	import { getGameState } from './lib/utils';
 	import GameSection from './components/GameSection.svelte';
 	import Logo from './components/Logo.svelte';
+	import type { Game, Drawing } from './types';
 
 	let loading = true;
 	let userName: string | null = null;
 	let draftUserName: string = '';
 	let inputError: string | null = null;
 
+	interface GameWithStateAndDrawings extends Game {
+		state: 'draw' | 'guess' | 'waiting';
+		drawings: Drawing[];
+		drawingsCount: number;
+	}
+
+	let processedUserGames: GameWithStateAndDrawings[] = [];
+	let gameStateCache = new Map<
+		string,
+		{ state: 'draw' | 'guess' | 'waiting'; timestamp: number }
+	>();
+	const CACHE_DURATION = 5000; // 5 seconds cache
+
 	export let navigate: (page: string) => void;
 
 	$: userName = $currentUser ? $currentUser.name : null;
 
-	// Helper to get full game objects from IDs
-	$: userGames = $currentUserGames.map((id) => $allGames[id]).filter(Boolean);
+	async function processGames() {
+		console.log(`[${new Date().toISOString()}] processGames: Start`);
+		if (!$currentUser || !userName) {
+			processedUserGames = [];
+			console.log(
+				`[${new Date().toISOString()}] processGames: End (no user/userName)`,
+			);
+			return;
+		}
+
+		if (processedUserGames.length === 0) {
+			loading = true;
+		}
+
+		const gamesDataStartTime = performance.now();
+		const gamesData = $currentUserGames
+			.map((id) => $allGames[id])
+			.filter(Boolean) as Game[];
+		console.log(
+			`[${new Date().toISOString()}] processGames: Mapped gamesData in ${performance.now() - gamesDataStartTime}ms. Count: ${gamesData.length}`,
+		);
+
+		if (gamesData.length === 0) {
+			processedUserGames = [];
+			loading = false;
+			console.log(
+				`[${new Date().toISOString()}] processGames: End (no gamesData)`,
+			);
+			return;
+		}
+
+		const drawingPromisesStartTime = performance.now();
+		const drawingPromises = gamesData.map((game) =>
+			game && game.id ? getDrawingsForGame(game.id) : Promise.resolve([]),
+		);
+		const allDrawings = await Promise.all(drawingPromises);
+		console.log(
+			`[${new Date().toISOString()}] processGames: Fetched allDrawings in ${performance.now() - drawingPromisesStartTime}ms`,
+		);
+
+		const gamesWithDetails: GameWithStateAndDrawings[] = [];
+		const now = Date.now();
+		const processingLoopStartTime = performance.now();
+
+		for (let i = 0; i < gamesData.length; i++) {
+			const gameLoopStartTime = performance.now();
+			const game = gamesData[i];
+			console.log(
+				`[${new Date().toISOString()}] processGames: Loop ${i}, Game ID: ${game?.id}`,
+			);
+
+			if (game && game.id && game.users) {
+				const drawings = allDrawings[i];
+
+				const gameStateStartTime = performance.now();
+				const cacheKey = `${game.id}-${userName}`;
+				const cachedState = gameStateCache.get(cacheKey);
+
+				let state: 'draw' | 'guess' | 'waiting';
+				if (cachedState && now - cachedState.timestamp < CACHE_DURATION) {
+					state = cachedState.state;
+				} else {
+					state = getGameState(game.users, drawings, userName);
+					gameStateCache.set(cacheKey, { state, timestamp: now });
+				}
+				console.log(
+					`[${new Date().toISOString()}] processGames: Game ID ${game.id} - getGameState took ${performance.now() - gameStateStartTime}ms`,
+				);
+
+				const drawingsCountStartTime = performance.now();
+				let drawingsCount = game.drawingsCount;
+				if (typeof drawingsCount !== 'number') {
+					console.log(
+						`[${new Date().toISOString()}] processGames: Game ID ${game.id} - drawingsCount is missing, fetching...`,
+					);
+					drawingsCount = await getDrawingsCountForGame(game.id);
+					console.log(
+						`[${new Date().toISOString()}] processGames: Game ID ${game.id} - fetched drawingsCount: ${drawingsCount}`,
+					);
+					// Update the game document in Firestore with the fetched count
+					await updateGame({ ...game, drawingsCount });
+					// Update the local allGames store as well
+					allGames.update((ags) => {
+						if (ags[game.id]) {
+							ags[game.id].drawingsCount = drawingsCount;
+						}
+						return ags;
+					});
+					console.log(
+						`[${new Date().toISOString()}] processGames: Game ID ${game.id} - updated drawingsCount in DB and store.`,
+					);
+				} else {
+					console.log(
+						`[${new Date().toISOString()}] processGames: Game ID ${game.id} - drawingsCount found in game object: ${drawingsCount}`,
+					);
+				}
+				console.log(
+					`[${new Date().toISOString()}] processGames: Game ID ${game.id} - drawingsCount logic took ${performance.now() - drawingsCountStartTime}ms`,
+				);
+
+				gamesWithDetails.push({ ...game, drawings, state, drawingsCount });
+			}
+			console.log(
+				`[${new Date().toISOString()}] processGames: Loop ${i}, Game ID: ${game?.id} - iteration took ${performance.now() - gameLoopStartTime}ms`,
+			);
+		}
+		console.log(
+			`[${new Date().toISOString()}] processGames: Processing loop took ${performance.now() - processingLoopStartTime}ms`,
+		);
+		processedUserGames = gamesWithDetails;
+		loading = false;
+		console.log(`[${new Date().toISOString()}] processGames: End`);
+	}
+
+	$: if ($currentUser && userName && $gamesLoaded) {
+		processGames();
+	}
+
+	// Clear cache when user changes
+	$: if (userName) {
+		gameStateCache.clear();
+	}
 
 	async function createUserAndSave(name: string) {
 		if (name.trim() && /^[a-zA-Z0-9]+$/.test(name)) {
 			loading = true;
 			await createUser(name.trim());
+			await initializeUserSession();
 			loading = false;
-			window.location.reload();
 		} else if (name.trim()) {
 			inputError = 'Username can only contain letters and numbers';
 		}
 	}
 
 	function validateInput(e: KeyboardEvent) {
-		// Prevent input of non-alphanumeric characters
 		if (
 			!/^[a-zA-Z0-9]$/.test(e.key) &&
 			!['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)
 		) {
 			e.preventDefault();
 		}
-
-		// Clear error when user is typing
 		if (inputError) inputError = null;
-
 		if (e.key === 'Enter' && draftUserName.trim()) {
 			createUserAndSave(draftUserName);
 		}
@@ -75,10 +209,12 @@
 		) {
 			return;
 		}
-
 		const success = await deleteGame(gameId);
 		if (success) {
-			window.location.reload();
+			$currentUserGames = $currentUserGames.filter((id) => id !== gameId);
+			delete $allGames[gameId];
+			allGames.set($allGames);
+			processGames();
 		}
 	}
 
@@ -86,13 +222,16 @@
 		loading = true;
 		$gamesLoaded = false;
 
-		// Initialize authentication first
 		if (!$authUser) {
 			await initializeAuth();
 		}
-
 		await initializeUserSession();
-		loading = false;
+
+		const willProcessGames =
+			get(currentUser) && get(currentUser)?.name && get(gamesLoaded);
+		if (!willProcessGames) {
+			loading = false;
+		}
 	});
 </script>
 
@@ -100,74 +239,73 @@
 	class="w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background-gradient-start to-background-gradient-end text-black"
 >
 	<Logo {navigate} />
-	{#if loading || ($currentUser && !$gamesLoaded)}
+	{#if loading}
 		<div class="flex flex-col items-center gap-4 w-full max-w-xs mx-auto">
 			<div class="text-primary text-lg font-semibold">Loading...</div>
 		</div>
-	{:else if $currentUser}
-		{#if userGames.length !== 0}
+	{:else if $currentUser && userName}
+		{#if processedUserGames.length !== 0}
 			<div class="flex flex-col gap-6 w-full max-w-xs mx-auto">
-				{#if userName}
-					{#if userGames.filter( (game) => ['draw', 'guess'].includes(getGameState(game, userName)), ).length > 0}
-						<div class="rounded-2xl bg-white/90 shadow-md p-4">
-							<div
-								class="text-center text-2xl font-bold mb-2 animate-gradient-text"
-							>
-								Your Turn!
-							</div>
-							{#each userGames.filter( (game) => ['draw', 'guess'].includes(getGameState(game, userName)), ) as game}
-								<div class="relative">
-									<button
-										class="absolute -top-2 -right-1 opacity-50 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md z-10"
-										on:click={() => handleDeleteGame(game.id)}
-										title="Delete game"
-									>
-										×
-									</button>
-									<GameSection
-										title=""
-										games={[game]}
-										currentUserName={userName}
-										{navigate}
-									/>
-								</div>
-							{/each}
+				{#if processedUserGames.filter((g) => g.state === 'draw' || g.state === 'guess').length > 0}
+					<div class="rounded-2xl bg-white/90 shadow-md p-4">
+						<div
+							class="text-center text-2xl font-bold mb-2 animate-gradient-text"
+						>
+							Your Turn!
 						</div>
-					{/if}
+						{#each processedUserGames.filter((g) => g.state === 'draw' || g.state === 'guess') as gameWithState ((gameWithState.id, gameWithState.drawingsCount))}
+							<div class="relative">
+								<button
+									class="absolute -top-2 -right-1 opacity-50 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md z-10"
+									on:click={() => handleDeleteGame(gameWithState.id)}
+									title="Delete game"
+								>
+									×
+								</button>
+								<GameSection
+									title=""
+									games={[gameWithState]}
+									currentUserName={userName}
+									{navigate}
+									drawingsCount={gameWithState.drawingsCount}
+								/>
+							</div>
+						{/each}
+					</div>
+				{/if}
 
-					{#if userGames.filter((game) => getGameState(game, userName) === 'waiting').length > 0}
-						<div class="rounded-2xl bg-white/60 shadow-sm p-4 opacity-60">
-							<div
-								class="text-center text-secondary/60 font-semibold text-xs mb-2"
-							>
-								Waiting ({userGames.filter(
-									(game) => getGameState(game, userName) === 'waiting',
-								).length})
-							</div>
-							{#each userGames.filter((game) => getGameState(game, userName) === 'waiting') as game}
-								<div class="relative">
-									<button
-										class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md z-10"
-										on:click={() => handleDeleteGame(game.id)}
-										title="Delete game"
-									>
-										×
-									</button>
-									<GameSection
-										title=""
-										games={[game]}
-										currentUserName={userName}
-										{navigate}
-									/>
-								</div>
-							{/each}
+				{#if processedUserGames.filter((g) => g.state === 'waiting').length > 0}
+					<div class="rounded-2xl bg-white/60 shadow-sm p-4 opacity-60">
+						<div
+							class="text-center text-secondary/60 font-semibold text-xs mb-2"
+						>
+							Waiting ({processedUserGames.filter((g) => g.state === 'waiting')
+								.length})
 						</div>
-					{/if}
+						{#each processedUserGames.filter((g) => g.state === 'waiting') as gameWithState (gameWithState.id)}
+							<div class="relative">
+								<button
+									class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md z-10"
+									on:click={() => handleDeleteGame(gameWithState.id)}
+									title="Delete game"
+								>
+									×
+								</button>
+								<GameSection
+									title=""
+									games={[gameWithState]}
+									currentUserName={userName}
+									{navigate}
+									drawingsCount={gameWithState.drawingsCount}
+								/>
+							</div>
+						{/each}
+					</div>
 				{/if}
 			</div>
 		{:else}
 			<div class="text-center text-gray-500 mt-8">
-				No games yet. Start a new one!
+				No games found, start one!
 			</div>
 		{/if}
 	{:else}

@@ -11,6 +11,7 @@
 	export let isNewGame: boolean = false;
 	export let onClick: (() => void) | null = null;
 	export let navigate: ((page: string) => void) | null = null;
+	export let drawingsCount: number = 0;
 
 	function handleClick() {
 		if (isNewGame && onClick) {
@@ -45,8 +46,8 @@
 					<UserRow
 						name={u}
 						coins={$allUsers[u].coins}
-						subtitle={`${game.drawings.length} drawing${game.drawings.length === 1 ? '' : 's'}`}
 						onClick={handleClick}
+						subtitle={`${drawingsCount} drawing${drawingsCount === 1 ? '' : 's'}`}
 					/>
 				{:else}
 					<span class="font-bold text-black">{u}</span>
