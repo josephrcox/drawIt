@@ -17,6 +17,7 @@
 		if (isNewGame && onClick) {
 			onClick();
 		} else if (game && navigate) {
+			console.log('Setting current game and navigating:', game.id);
 			$currentGame = game;
 			navigate('home');
 		}

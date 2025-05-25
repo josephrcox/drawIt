@@ -113,10 +113,9 @@ export async function submitGuess(
 		// These are critical for the next step, so await them.
 		await getRandomWords(moreWordOptions ? 5 : 3, gameId, true); // Pass gameId and force regeneration
 	} else {
-		const currentGuesses = currentDrawing.guesses || [];
-		if (!currentGuesses.includes(guess)) {
-			updates.guesses = [...currentGuesses, guess];
-		}
+		// Handle incorrect guess - use the current drawing's guesses array which includes optimistic updates
+		updates.guesses = currentDrawing.guesses || [];
+		console.log('Syncing all guesses to database:', updates.guesses);
 	}
 
 	if (Object.keys(updates).length > 0) {

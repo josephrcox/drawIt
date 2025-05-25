@@ -62,10 +62,15 @@
 		const gameId = $currentGame?.id;
 
 		if (page === 'home') {
-			// Clear current game when navigating to home
-			$currentGame = null;
-			params.delete('currentGame');
-			params.delete('page');
+			if (gameId) {
+				// If we have a current game, keep it in the URL
+				params.set('currentGame', gameId);
+				params.delete('page');
+			} else {
+				// If no game, clear everything
+				params.delete('currentGame');
+				params.delete('page');
+			}
 		} else {
 			if (gameId) {
 				params.set('currentGame', gameId);

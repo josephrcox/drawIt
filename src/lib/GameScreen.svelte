@@ -33,7 +33,7 @@
 
 	let gameDrawings: Drawing[] = [];
 	let currentDrawingFull: Drawing | null = null;
-	let guess: string = '';
+	let guess = '';
 
 	let drawingDraft: Drawing | null = null;
 	let submittingDraft = false;
@@ -89,6 +89,33 @@
 				);
 
 	$: $isDrawing = !!drawingDraft;
+
+	// Only allow a-z and A-Z
+	function sanitize(input: string): string {
+		return input.replace(/[^a-zA-Z]/g, '');
+	}
+
+	function validateInput(e: KeyboardEvent) {
+		// Prevent input of non-letter characters
+		if (
+			!/^[a-zA-Z]$/.test(e.key) &&
+			!['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)
+		) {
+			e.preventDefault();
+		}
+
+		if (e.key === 'Enter' && guess.length > 0) {
+			handleGuessSubmission(guess);
+		}
+	}
+
+	// Prevent paste events
+	function handlePaste(e: ClipboardEvent) {
+		e.preventDefault();
+		const pastedText = e.clipboardData?.getData('text') || '';
+		const sanitized = sanitize(pastedText);
+		guess = sanitized;
+	}
 
 	async function handleGuessSubmission(guessText: string) {
 		if (
@@ -362,11 +389,8 @@
 								placeholder="Type your guess..."
 								class="input input-bordered flex-1 bg-white text-black border-primary"
 								bind:value={guess}
-								on:keydown={(e) => {
-									if (e.key === 'Enter' && guess.length > 0) {
-										handleGuessSubmission(guess);
-									}
-								}}
+								on:keydown={validateInput}
+								on:paste={handlePaste}
 							/>
 							<button
 								class="btn btn-primary"
