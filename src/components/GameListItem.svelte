@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getDrawingsForGame } from '../lib/Firebase';
 	import { allUsers, currentGame } from '../store';
 	import type { Game } from '../types';
 	// @ts-ignore
@@ -12,8 +13,21 @@
 	export let onClick: (() => void) | null = null;
 	export let navigate: ((page: string) => void) | null = null;
 	export let drawingsCount: number = 0;
+	export let disableClick: boolean = false;
 
-	function handleClick() {
+	async function handleClick() {
+		if (disableClick && game && navigate) {
+			// Get latest drawing for this game that has guessed: false
+			const latestDrawing = await getDrawingsForGame(game.id);
+			if (latestDrawing == null || latestDrawing[0] === null) return;
+			if (
+				latestDrawing[0].artist === currentUserName &&
+				latestDrawing[0].guessedBy === ''
+			) {
+				$currentGame = game;
+				navigate('home');
+			}
+		}
 		if (isNewGame && onClick) {
 			onClick();
 		} else if (game && navigate) {

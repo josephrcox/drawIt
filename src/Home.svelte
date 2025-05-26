@@ -297,6 +297,7 @@
 									currentUserName={userName}
 									{navigate}
 									drawingsCount={gameWithState.drawingsCount}
+									disableClick={true}
 								/>
 							</div>
 						{/each}
