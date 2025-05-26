@@ -144,24 +144,37 @@ export async function getRandomWords(
 	}
 
 	const wordList: WordOptions[] = defaultWords.map((word) => ({
-		secretWord: word,
+		secretWord: word.toLowerCase(),
 		coins: 0,
 	}));
 
 	const customWordsList = await loadWords();
 	wordList.push(
 		...customWordsList.map((word) => ({
-			secretWord: word.word,
+			secretWord: word.word.toLowerCase(),
 			coins: 0,
 			createdBy: word.createdBy,
 			createdAt: word.createdAt,
 		})),
 	);
 
-	const randomWords = [...wordList]
-		.sort(() => Math.random() - 0.5)
-		.slice(0, count);
-	randomWords.forEach((word, i) => {
+	// Fisher-Yates shuffle algorithm
+	const shuffledWords = [...wordList];
+	for (let i = shuffledWords.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[shuffledWords[i], shuffledWords[j]] = [shuffledWords[j], shuffledWords[i]];
+	}
+
+	// First select random words
+	const selectedWords = shuffledWords.slice(0, count);
+
+	// Then sort those selected words by length
+	const sortedWords = selectedWords.sort(
+		(a, b) => a.secretWord.length - b.secretWord.length,
+	);
+
+	// Finally assign coins based on length
+	sortedWords.forEach((word, i) => {
 		word.coins = i + 1;
 	});
 
@@ -169,11 +182,11 @@ export async function getRandomWords(
 		// If gameId was provided, attempt to update its wordOptions
 		await updateGame({
 			id: gameId,
-			wordOptions: randomWords,
+			wordOptions: sortedWords,
 		} as Partial<Game> as Game);
 	}
 
-	return randomWords;
+	return sortedWords;
 }
 
 /**
