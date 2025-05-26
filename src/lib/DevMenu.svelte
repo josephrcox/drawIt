@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { currentUser } from '../store';
-	import { addcoins, getUsers, lowercaseAllUserNames } from './Firebase';
+	import {
+		addcoins,
+		getUsers,
+		lowercaseAllUserNames,
+		backfillLikesCount,
+	} from './Firebase';
 	import { onMount } from 'svelte';
 	import type { User } from '../types';
 	import { migrateDrawings } from '../../migration';
@@ -10,6 +15,7 @@
 	let isOpen = false;
 	let users: User[] = [];
 	let selectedUserId: string | null = null;
+	let isBackfillingLikes = false;
 
 	async function handleKeyPress(event: KeyboardEvent) {
 		if (event.key === '\\') {
@@ -92,6 +98,19 @@
 		}
 	}
 
+	async function handleBackfillLikesCount() {
+		if (!confirm('Backfill likesCount for all drawings?')) return;
+		isBackfillingLikes = true;
+		try {
+			await backfillLikesCount();
+			alert('Backfill complete!');
+		} catch (e) {
+			alert('Error during backfill. See console.');
+		} finally {
+			isBackfillingLikes = false;
+		}
+	}
+
 	function formatFirestoreDate(val: any): string {
 		if (
 			val &&
@@ -116,7 +135,7 @@
 </script>
 
 {#if isOpen}
-	<div class="fixed top-0 right-0 p-4 z-50">
+	<div class="fixed top-0 right-0 p-4 z-50 h-screen overflow-y-auto">
 		<div class="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
 			<h2 class="text-lg font-bold mb-4">Dev Menu</h2>
 			<div class="flex flex-col gap-2">
@@ -135,6 +154,13 @@
 				</button>
 				<button class="btn btn-warning" on:click={lowercaseAllUserNames}>
 					Lowercase All Names
+				</button>
+				<button
+					class="btn btn-accent"
+					on:click={handleBackfillLikesCount}
+					disabled={isBackfillingLikes}
+				>
+					{isBackfillingLikes ? 'Backfilling...' : 'Backfill Likes Count'}
 				</button>
 				<!-- <button class="btn btn-secondary" on:click={migrateDrawings}>
 					Migrate Drawings
@@ -169,7 +195,7 @@
 				</div>
 			</div>
 
-			<div class="mt-4">
+			<div class="mt-4 overflow-y-auto">
 				<h3 class="text-md font-semibold mb-2">Users by Last Active</h3>
 				<div class="overflow-x-auto">
 					<table class="table table-zebra w-full">
@@ -181,7 +207,7 @@
 								<th>Created</th>
 							</tr>
 						</thead>
-						<tbody>
+						<tbody class="max-h-[300px] overflow-y-auto">
 							{#each users as user}
 								<tr>
 									<td>{user.name}</td>

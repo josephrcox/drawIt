@@ -50,6 +50,7 @@ export type Drawing = {
 	gameId?: string;
 	originalIndex?: number; // Renamed from index for clarity with migration
 	dataHash?: string; // For de-duplication
+	likesCount?: number;
 };
 
 export type Comment = {

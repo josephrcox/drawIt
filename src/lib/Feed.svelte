@@ -33,6 +33,7 @@
 	let screenshotBlob: Blob | null = null;
 	let showShareOptions = false;
 	let screenshotFilename = '';
+	let sortBy: 'recent' | 'likes' = 'recent';
 
 	export let navigate: (page: string) => void;
 	export let drawingId: string | null = null;
@@ -48,7 +49,7 @@
 				drawings = specificDrawings;
 			} else {
 				// Otherwise load recent drawings as before
-				drawings = await getRecentDrawings();
+				drawings = await getRecentDrawings(sortBy);
 			}
 			console.log('Drawings loaded', drawings);
 
@@ -142,11 +143,37 @@
 	async function toggleLike(drawingId: string) {
 		const user = $currentUser;
 		if (user) {
-			try {
-				await likeDrawing(drawingId, user.name);
-				// No need to manually update UI, Firestore subscription handles it
-			} catch (error) {
-				console.error('Error liking drawing:', error);
+			// Optimistically update the UI
+			const drawingIndex = drawings.findIndex((d) => d.id === drawingId);
+			if (drawingIndex !== -1) {
+				const drawing = drawings[drawingIndex];
+				let newLikes;
+				let liked = false;
+				if (drawing.likes?.includes(user.name)) {
+					newLikes = drawing.likes.filter((name) => name !== user.name);
+				} else {
+					newLikes = [...(drawing.likes || []), user.name];
+					liked = true;
+				}
+				const prevLikes = drawing.likes;
+				const prevLikesCount = drawing.likesCount;
+				drawings[drawingIndex] = {
+					...drawing,
+					likes: newLikes,
+					likesCount: newLikes.length,
+				};
+				// Await backend, revert if error
+				try {
+					await likeDrawing(drawingId, user.name);
+				} catch (error) {
+					console.error('Error liking drawing:', error);
+					// Revert optimistic update
+					drawings[drawingIndex] = {
+						...drawing,
+						likes: prevLikes,
+						likesCount: prevLikesCount,
+					};
+				}
 			}
 		} else {
 			alert('No user logged in');
@@ -503,10 +530,43 @@
 			day: 'numeric',
 		});
 	}
+
+	// Function to handle sort change
+	async function handleSortChange(newSort: 'recent' | 'likes') {
+		if (newSort === sortBy) return;
+		sortBy = newSort;
+		loading = true;
+		try {
+			drawings = await getRecentDrawings(sortBy);
+		} catch (error) {
+			console.error('Error loading sorted drawings:', error);
+		} finally {
+			loading = false;
+		}
+	}
 </script>
 
 <div class="p-4">
 	<Logo {navigate} />
+
+	<!-- Add sorting controls -->
+	{#if !drawingId}
+		<div class="flex justify-center gap-2 mb-4">
+			<button
+				class="btn btn-sm {sortBy === 'recent' ? 'btn-primary' : 'btn-outline'}"
+				on:click={() => handleSortChange('recent')}
+			>
+				Most Recent
+			</button>
+			<button
+				class="btn btn-sm {sortBy === 'likes' ? 'btn-primary' : 'btn-outline'}"
+				on:click={() => handleSortChange('likes')}
+			>
+				Most Liked
+			</button>
+		</div>
+	{/if}
+
 	{#if loading}
 		<div class="flex justify-center items-center h-40">
 			<span class="text-accent">Loading drawings...</span>

@@ -545,19 +545,15 @@ export async function likeDrawing(
 	userName: string,
 ): Promise<boolean> {
 	try {
-		const drawingsQuery = query(
-			drawingCollection,
-			where('id', '==', drawingId),
-			limit(1),
-		);
-		const drawingSnapshot = await getDocs(drawingsQuery);
+		// Fetch drawing by Firestore document ID, not by 'id' field
+		const drawingRef = doc(drawingCollection, drawingId);
+		const drawingDoc = await getDoc(drawingRef);
 
-		if (drawingSnapshot.empty) {
+		if (!drawingDoc.exists()) {
 			console.error(`Drawing not found ${drawingId} to like.`);
 			return false;
 		}
 
-		const drawingDoc = drawingSnapshot.docs[0];
 		const drawingData = drawingDoc.data() as Drawing;
 
 		// Initialize likes array if it doesn't exist
@@ -593,7 +589,10 @@ export async function likeDrawing(
 
 		console.log(`Updated likes:`, updatedLikes);
 
-		await updateDoc(drawingDoc.ref, { likes: updatedLikes });
+		await updateDoc(drawingRef, {
+			likes: updatedLikes,
+			likesCount: updatedLikes.length,
+		});
 
 		console.log(`Like operation successful for drawing ${drawingDoc.id}`);
 		return true;
@@ -714,21 +713,33 @@ export async function loadGame(gameId: string): Promise<Game | null> {
  * Get the most recent drawings from all games
  * Returns the 100 most recent drawings sorted by creation date
  */
-export async function getRecentDrawings(): Promise<Drawing[]> {
+export async function getRecentDrawings(
+	sortBy: 'recent' | 'likes' = 'recent',
+): Promise<Drawing[]> {
 	try {
-		// Fetch drawings directly from the drawingCollection
-		// The 'index' field on these drawings is the originalIndex from the game
-		// The 'gameId' field is also present
-		const drawingsSnapshot = await getDocs(
-			query(drawingCollection, orderBy('createdAt', 'desc'), limit(50)),
-		);
+		let drawingsQuery;
+
+		if (sortBy === 'likes') {
+			// Sort by number of likes (descending)
+			drawingsQuery = query(
+				drawingCollection,
+				orderBy('likesCount', 'desc'),
+				limit(50),
+			);
+		} else {
+			// Default sort by creation date (descending)
+			drawingsQuery = query(
+				drawingCollection,
+				orderBy('createdAt', 'desc'),
+				limit(50),
+			);
+		}
+
+		const drawingsSnapshot = await getDocs(drawingsQuery);
 
 		const allDrawings: Drawing[] = drawingsSnapshot.docs.map((doc) => {
 			const drawing = doc.data() as Drawing;
-			// The drawing document should already have gameId, originalIndex (as 'index'), and 'guessedBy' if set.
-			// We might need to fetch game user list if the old `guessedBy` logic is critical.
-			// For now, assume `guessedBy` is the actual guesser or empty.
-			return { ...drawing, id: doc.id }; // Add document ID to the drawing object
+			return { ...drawing, id: doc.id };
 		});
 
 		console.log('Fetched recent drawings:', allDrawings);
@@ -1030,7 +1041,15 @@ export async function createNewDrawing(
 		}
 		const finalDrawingId = drawingData.id as string;
 		const drawingRef = doc(drawingCollection, finalDrawingId);
-		await setDoc(drawingRef, drawingData);
+
+		// Ensure artist is in likes array and likesCount is 1 by default
+		let likes = Array.isArray(drawingData.likes) ? drawingData.likes : [];
+		if (!likes.includes(drawingData.artist)) {
+			likes = [drawingData.artist, ...likes];
+		}
+		const likesCount = likes.length;
+
+		await setDoc(drawingRef, { ...drawingData, likes, likesCount });
 
 		// Increment drawingsCount on the game
 		if (drawingData.gameId) {
@@ -1051,7 +1070,7 @@ export async function createNewDrawing(
 			}
 		}
 
-		return { ...drawingData, id: finalDrawingId };
+		return { ...drawingData, likes, likesCount, id: finalDrawingId };
 	} catch (error) {
 		console.error('Error creating new drawing:', error);
 		return null;
@@ -1234,5 +1253,36 @@ export async function getUserByIdOrName(
 	} catch (error) {
 		console.error('Error getting user by ID or name:', error);
 		return null;
+	}
+}
+
+// Backfill likesCount for all drawings in the DB
+export async function backfillLikesCount(): Promise<void> {
+	try {
+		const drawingsSnapshot = await getDocs(drawingCollection);
+		for (const docSnap of drawingsSnapshot.docs) {
+			const data = docSnap.data() as Drawing;
+			let likes = Array.isArray(data.likes) ? data.likes : [];
+			const artist =
+				typeof data.artist === 'string' && data.artist.trim()
+					? data.artist
+					: null;
+			if (artist && !likes.includes(artist)) {
+				likes = [artist, ...likes];
+			}
+			const likesCount = likes.length;
+			if (artist) {
+				await updateDoc(docSnap.ref, { likes, likesCount });
+			} else {
+				console.warn(
+					`Skipped drawing ${docSnap.id}: missing or invalid artist`,
+				);
+			}
+		}
+		console.log(
+			'Backfilled likesCount for all drawings and ensured artist likes their own drawing.',
+		);
+	} catch (error) {
+		console.error('Error backfilling likesCount:', error);
 	}
 }
