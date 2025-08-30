@@ -835,7 +835,7 @@ export async function checkDailyReward(user: User): Promise<boolean> {
 			[user.name]: updatedUser,
 		}));
 
-		showSuccessToast(`Daily reward: ${rewardCoins} coins!`);
+		showSuccessToast(`Hi Quinn: ${rewardCoins} coins!`);
 		return true;
 	} catch (error) {
 		console.error('Error giving daily reward:', error);
