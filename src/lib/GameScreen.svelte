@@ -273,13 +273,7 @@
 		}
 	}
 
-	onMount(() => {
-		if ($currentGame?.id) {
-			fetchAndSetDrawings($currentGame.id);
-		} else {
-			initialLoadComplete = true;
-		}
-	});
+	onMount(() => {});
 
 	onDestroy(() => {
 		// if (unsubscribeFromGame) unsubscribeFromGame();
@@ -287,10 +281,12 @@
 	});
 </script>
 
-<div class="rounded-lg p-9 bg-background flex flex-col justify-center h-screen">
+<div
+	class="rounded-lg p-9 bg-background flex flex-col justify-center h-screen mx-auto"
+>
 	{#if $currentGame && $currentUser && initialLoadComplete}
 		{#if currentDrawingFull}
-			<div class="flex flex-col items-center gap-6">
+			<div class="flex flex-col h-full items-center gap-6">
 				<div
 					class="bg-white/90 p-2 rounded-lg w-full max-w-[min(90vw,300px)] aspect-square flex items-center justify-center mx-auto border-2 border-primary"
 				>
@@ -422,7 +418,19 @@
 					</span>
 				</p>
 				<div class="flex flex-col gap-4 w-full">
-					{#await wordsPromise then words}
+					{#await wordsPromise}
+						<div class="flex flex-col gap-2">
+							<div
+								class="h-12 rounded-lg bg-white/70 animate-pulse border border-primary/20"
+							></div>
+							<div
+								class="h-12 rounded-lg bg-white/70 animate-pulse border border-primary/20"
+							></div>
+							<div
+								class="h-12 rounded-lg bg-white/70 animate-pulse border border-primary/20"
+							></div>
+						</div>
+					{:then words}
 						{#each words as word}
 							<button
 								class="btn flex flex-row items-center justify-between w-full border text-white"

@@ -26,7 +26,7 @@
 
 {#if !$isDrawing}
 	<nav
-		class="fixed bottom-0 left-0 right-0 bg-white border-t border-base-200 px-4 py-2 z-50"
+		class="fixed bottom-0 left-0 right-0 bg-white border-t border-base-200 px-4 py-2 z-50 animate-fade-in-simple"
 	>
 		<div class="flex justify-around items-center max-w-md mx-auto">
 			<!-- coins -->
@@ -157,3 +157,18 @@
 	<!-- Add padding to the bottom of the main content to account for the fixed nav -->
 	<div class="h-20"></div>
 {/if}
+
+<style>
+	@keyframes fade-in-simple {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	.animate-fade-in-simple {
+		animation: fade-in-simple 0.5s ease-out;
+	}
+</style>

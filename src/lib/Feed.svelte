@@ -10,7 +10,6 @@
 	import { getHint, getSuperHint } from './utils';
 	import coinPng from '../assets/coin.png';
 	import logoUrl from '../assets/logo.svg';
-	import Logo from '../components/Logo.svelte';
 	import { currentUser } from '../store';
 	import html2canvas from 'html2canvas';
 	import {
@@ -544,17 +543,9 @@
 			loading = false;
 		}
 	}
-
-	function listWords() {
-		for (const drawing of drawings) {
-			console.log(drawing.secretWord);
-		}
-	}
 </script>
 
 <div class="p-4">
-	<Logo {navigate} />
-
 	<!-- Add sorting controls -->
 	{#if !drawingId}
 		<div class="flex justify-center gap-2 mb-4">

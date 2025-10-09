@@ -7,6 +7,8 @@
 	import Notifications from './lib/Notifications.svelte';
 	import { currentGame, currentUser } from './store';
 	import BottomNav from './lib/BottomNav.svelte';
+	import pumpkinPng from './assets/pumpkin.png';
+	import logoUrl from './assets/logo.svg';
 	import {
 		generateRandomUsers,
 		validateUserSession,
@@ -15,12 +17,14 @@
 	} from './lib/Firebase';
 	import DevMenu from './lib/DevMenu.svelte';
 	import Store from './lib/Store.svelte';
+	import Logo from './components/Logo.svelte';
 
 	let currentPage = 'home'; // Default to home page
 	let isLoading = true;
 	let drawingId: string | null = null;
 
 	onMount(async () => {
+		const splashStart = Date.now();
 		// const deletedCount = await deleteOrphanedGames();
 		// console.log(`Cleaned up ${deletedCount} orphaned games`);
 		// Validate user session first //
@@ -57,6 +61,11 @@
 			}
 		});
 
+		const elapsed = Date.now() - splashStart;
+		const remaining = 3000 - elapsed;
+		if (remaining > 0) {
+			await new Promise((resolve) => setTimeout(resolve, remaining));
+		}
 		isLoading = false;
 	});
 
@@ -102,17 +111,27 @@
 </script>
 
 {#if isLoading}
-	<div class="w-full min-h-screen flex items-center justify-center">
-		<div
-			class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"
-		></div>
-	</div>
+	<main
+		class="w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background-gradient-start to-background-gradient-end text-black pb-20 overflow-y-auto animate-fade-in-simple"
+	>
+		<Logo {navigate} spinning={true} />
+	</main>
 {:else if !$currentUser}
-	<Home {navigate} />
+	<main
+		class="w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background-gradient-start to-background-gradient-end text-black pb-20 overflow-y-auto animate-fade-in-simple"
+	>
+		<Logo {navigate} />
+		<Home {navigate} />
+	</main>
 {:else}
 	<main
-		class="w-full min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-background-gradient-start to-background-gradient-end text-black pb-20 overflow-y-auto"
+		class="w-full min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-background-gradient-start to-background-gradient-end text-black pb-20 overflow-y-auto animate-fade-in-simple"
 	>
+		<!-- Logo at top of all pages -->
+		<div class="w-full flex justify-center pt-4 pb-2">
+			<Logo {navigate} />
+		</div>
+
 		<!-- svelte-ignore missing-declaration -->
 		<div class="w-full max-w-md mx-auto px-4">
 			{#if currentPage === 'notifications'}
@@ -162,3 +181,18 @@
 		{/if}
 	</main>
 {/if}
+
+<style>
+	@keyframes fade-in-simple {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	.animate-fade-in-simple {
+		animation: fade-in-simple 0.5s ease-out;
+	}
+</style>

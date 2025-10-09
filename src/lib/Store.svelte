@@ -7,7 +7,6 @@
 		gamesLoaded,
 	} from '../store';
 	import coinGif from '../assets/coin.gif';
-	import Logo from '../components/Logo.svelte';
 	import { addcoins, createCustomWord, purchaseUpgrade } from './Firebase';
 	import { showSuccessToast } from './notifications';
 	import { UserUpgrade } from '../types';
@@ -79,7 +78,6 @@
 </script>
 
 <div class="p-4">
-	<Logo {navigate} />
 	<div class="flex flex-col items-center justify-center mt-8">
 		<div class="flex items-center gap-2">
 			<img src={coinGif} class="w-8 h-8" alt="coins" />

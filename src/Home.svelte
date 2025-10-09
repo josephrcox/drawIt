@@ -3,6 +3,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
+	import pumpkinPng from './assets/pumpkin.png';
+	import logoUrl from './assets/logo.svg';
 	import {
 		currentGame,
 		currentUser,
@@ -29,7 +31,6 @@
 	} from './lib/Firebase';
 	import { getGameState } from './lib/utils';
 	import GameSection from './components/GameSection.svelte';
-	import Logo from './components/Logo.svelte';
 	import type { Game, Drawing } from './types';
 
 	let loading = true;
@@ -235,17 +236,26 @@
 	});
 </script>
 
-<div
-	class="w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background-gradient-start to-background-gradient-end text-black"
->
-	<Logo {navigate} />
+<div class="w-full flex flex-col items-center justify-center text-black">
 	{#if loading}
-		<div class="flex flex-col items-center gap-4 w-full max-w-xs mx-auto">
-			<div class="text-primary text-lg font-semibold">Loading...</div>
+		<div
+			class="flex flex-col items-center gap-4 w-full max-w-xs mx-auto animate-fade-in-simple"
+		>
+			<div
+				class="h-10 w-48 rounded-lg bg-white/70 animate-pulse border border-primary/20"
+			></div>
+			<div
+				class="h-24 w-full rounded-2xl bg-white/80 animate-pulse border border-primary/20"
+			></div>
+			<div
+				class="h-24 w-full rounded-2xl bg-white/60 animate-pulse border border-primary/20"
+			></div>
 		</div>
 	{:else if $currentUser && userName}
 		{#if processedUserGames.length !== 0}
-			<div class="flex flex-col gap-6 w-full max-w-xs mx-auto">
+			<div
+				class="flex flex-col gap-6 w-full max-w-xs mx-auto animate-fade-in-simple"
+			>
 				{#if processedUserGames.filter((g) => g.state === 'draw' || g.state === 'guess').length > 0}
 					<div class="rounded-2xl bg-white/90 shadow-md p-4">
 						<div
@@ -305,12 +315,14 @@
 				{/if}
 			</div>
 		{:else}
-			<div class="text-center text-gray-500 mt-8">
+			<div class="text-center text-gray-500 mt-8 animate-fade-in-simple">
 				No games found, start one!
 			</div>
 		{/if}
 	{:else}
-		<div class="flex flex-col items-center gap-4 w-full max-w-xs mx-auto mt-8">
+		<div
+			class="flex flex-col items-center gap-4 w-full max-w-xs mx-auto mt-8 animate-fade-in-simple"
+		>
 			<span class="text-2xl font-bold text-primary">Who are you?</span>
 			<input
 				type="text"
@@ -335,7 +347,7 @@
 <style>
 	/* Add any custom styles here if needed */
 	.animate-gradient-text {
-		background: linear-gradient(to right, #f59e0b, #fde68a, #f59e0b);
+		background: linear-gradient(to right, #d98d0a, #9be27c, #880bf5);
 		background-size: 200% auto;
 		-webkit-background-clip: text;
 		background-clip: text;
@@ -348,5 +360,18 @@
 		to {
 			background-position: 200% center;
 		}
+	}
+
+	@keyframes fade-in-simple {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	.animate-fade-in-simple {
+		animation: fade-in-simple 0.5s ease-out;
 	}
 </style>

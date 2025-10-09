@@ -9,7 +9,6 @@
 	import type { User } from '../types';
 	// @ts-ignore
 	import Userrow from '../components/UserRow.svelte';
-	import Logo from '../components/Logo.svelte';
 	import { onMount } from 'svelte';
 
 	let userSearchQuery: string = '';
@@ -55,9 +54,8 @@
 
 <div class="flex flex-col gap-4 p-4 pt-24">
 	<div class="flex flex-col gap-2">
-		<Logo {navigate} />
-		<h2 class="text-xl font-bold text-primary">Challenge a friend</h2>
-		<p class="text-sm text-black/60">Tap on a user to start a new game</p>
+		<h2 class="text-xl font-bold text-white">Challenge a friend</h2>
+		<p class="text-xs text-white">Tap on a user to start a new game</p>
 	</div>
 
 	<!-- Search Input -->

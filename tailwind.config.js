@@ -64,8 +64,8 @@ export default {
 				background: {
 					DEFAULT: '#FFF8F1', // warm off-white
 					gradient: {
-						start: '#FFE3C1', // peach
-						end: '#FDE68A', // soft golden
+						start: '#eb6424', // peach
+						end: '#FFB727C5', // soft golden
 					},
 				},
 			},

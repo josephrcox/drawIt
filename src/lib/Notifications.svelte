@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { currentUser, allUsers } from '../store';
-	import Logo from '../components/Logo.svelte';
 	import type { UserNotification } from '../types';
 	import { markNotificationRead, getUserByIdOrName } from './Firebase';
 
@@ -83,7 +82,6 @@
 </script>
 
 <div class="p-4">
-	<Logo {navigate} />
 	<div class="mt-4">
 		<h1 class="text-2xl font-bold text-primary mb-4">Notifications</h1>
 		{#if notifications.length === 0}
