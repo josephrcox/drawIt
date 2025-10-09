@@ -39,24 +39,60 @@ export default {
 				'5xl': '3rem', // 48px (was 48px)
 			},
 			colors: {
+				// Autumn palette
 				primary: {
-					DEFAULT: '#a78bfa', // more saturated purple
+					DEFAULT: '#C2410C', // burnt orange
 				},
 				secondary: {
-					DEFAULT: '#f472b6', // more saturated pink
+					DEFAULT: '#B45309', // warm amber-brown
 				},
 				accent: {
-					DEFAULT: '#60a5fa', // more saturated blue
+					DEFAULT: '#F59E0B', // golden accent
+				},
+				error: {
+					DEFAULT: '#B91C1C', // deep cranberry red
+				},
+				success: {
+					DEFAULT: '#16A34A', // warm green
+				},
+				warning: {
+					DEFAULT: '#D97706', // amber
+				},
+				muted: {
+					DEFAULT: '#7A5C3E', // warm brown-gray for text and borders
 				},
 				background: {
-					DEFAULT: '#f3f4fa', // very light lavender/blue
+					DEFAULT: '#FFF8F1', // warm off-white
 					gradient: {
-						start: '#F3D1E4', // light pink with more saturation
-						end: '#BDDAFF', // light blue with more saturation
+						start: '#FFE3C1', // peach
+						end: '#FDE68A', // soft golden
 					},
 				},
 			},
 		},
 	},
 	plugins: [require('daisyui')],
+	daisyui: {
+		themes: [
+			{
+				autumn: {
+					primary: '#C2410C',
+					'primary-content': '#FFF7ED',
+					secondary: '#B45309',
+					'secondary-content': '#FFFBEB',
+					accent: '#F59E0B',
+					'accent-content': '#3F2D00',
+					neutral: '#3F2D1E',
+					'neutral-content': '#F2E9DC',
+					'base-100': '#FFF8F1',
+					'base-200': '#FFEDD5',
+					'base-300': '#FED7AA',
+					info: '#0284C7',
+					success: '#16A34A',
+					warning: '#D97706',
+					error: '#B91C1C',
+				},
+			},
+		],
+	},
 };

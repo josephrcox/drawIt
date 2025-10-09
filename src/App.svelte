@@ -136,7 +136,7 @@
 		<!-- Floating Notification Bell -->
 		{#if $currentUser?.notifications?.filter((n) => !n.read).length > 0}
 			<button
-				class="fixed bottom-24 right-4 bg-red-500 text-white rounded-full p-3 shadow-lg hover:bg-primary/90 transition-colors z-50"
+				class="fixed bottom-24 right-4 bg-error text-white rounded-full p-3 shadow-lg hover:bg-error/90 transition-colors z-50"
 				on:click={() => navigate('notifications')}
 				title="Notifications"
 			>

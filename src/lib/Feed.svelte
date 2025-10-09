@@ -211,12 +211,12 @@
 			// Constants for styling
 			const PADDING = 20;
 			const BORDER_WIDTH = 4;
-			const BORDER_COLOR = '#a78bfa';
+			const BORDER_COLOR = '#C2410C';
 			const BG_COLOR = '#ffffff';
 			const LOGO_WIDTH = 120;
 			const TEXT_COLOR = '#000000';
-			const PRIMARY_COLOR = '#6419e6';
-			const SECONDARY_COLOR = '#d926a9';
+			const PRIMARY_COLOR = '#C2410C';
+			const SECONDARY_COLOR = '#B45309';
 			const LIKE_COLOR = '#000000';
 			const URL_HEIGHT = 25; // Height for URL at bottom
 

@@ -87,7 +87,7 @@
 	<div class="mt-4">
 		<h1 class="text-2xl font-bold text-primary mb-4">Notifications</h1>
 		{#if notifications.length === 0}
-			<div class="text-center text-gray-500 py-8">No notifications yet</div>
+			<div class="text-center text-muted py-8">No notifications yet</div>
 		{:else}
 			<div class="flex flex-col gap-2">
 				{#each notifications as notification}
@@ -101,7 +101,7 @@
 							<!-- red circle if unread -->
 							{#if !notification.read}
 								<div class="flex items-center mt-2">
-									<div class="w-2 h-2 bg-red-500 rounded-full"></div>
+									<div class="w-2 h-2 bg-error rounded-full"></div>
 								</div>
 							{/if}
 							<div class="flex flex-col pl-4">
@@ -116,7 +116,7 @@
 									>
 									commented on your drawing
 								{/if}
-								<span class="text-xs text-gray-500">
+								<span class="text-xs text-muted">
 									{formatDate(notification.createdAt)}
 								</span>
 							</div>

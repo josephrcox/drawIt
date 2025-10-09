@@ -85,7 +85,7 @@
 			<img src={coinGif} class="w-8 h-8" alt="coins" />
 			<span class="text-2xl font-bold">{user?.coins || 0}</span>
 		</div>
-		<p class="text-gray-600">Your current balance</p>
+		<p class="text-muted">Your current balance</p>
 
 		<div
 			class="flex flex-col items-center justify-center gap-2 pt-8 drop-shadow-sm"
@@ -94,14 +94,14 @@
 				class="flex flex-col items-start justify-center gap-4 bg-white p-4 rounded-2xl"
 			>
 				<div class="flex flex-row justify-between w-full">
-					<p class="text-gray-600 text-md font-bold">🤬 Add a Custom Word</p>
+					<p class="text-muted text-md font-bold">🤬 Add a Custom Word</p>
 					<div class="flex flex-row items-center justify-center gap-2">
 						<img src={coinGif} class="w-4 h-4" alt="coins" />
 						<span class="text-md font-bold">30</span>
 					</div>
 				</div>
 
-				<p class="text-gray-600 opacity-50 text-xs">
+				<p class="text-muted opacity-70 text-xs">
 					Add a custom word to everyone's word options.
 				</p>
 
@@ -134,14 +134,14 @@
 				class="flex flex-col items-start justify-center gap-4 bg-white p-4 rounded-2xl"
 			>
 				<div class="flex flex-row justify-between w-full">
-					<p class="text-gray-600 text-md font-bold">🤔 More Word Options</p>
+					<p class="text-muted text-md font-bold">🤔 More Word Options</p>
 					<div class="flex flex-row items-center justify-center gap-2">
 						<img src={coinGif} class="w-4 h-4" alt="coins" />
 						<span class="text-md font-bold">50</span>
 					</div>
 				</div>
 
-				<p class="text-gray-600 opacity-50 text-xs">
+				<p class="text-muted opacity-70 text-xs">
 					Permanently get 5 word options instead of 3 when drawing.
 				</p>
 
@@ -186,14 +186,14 @@
 				class="flex flex-col items-start justify-center gap-4 bg-white p-4 rounded-2xl"
 			>
 				<div class="flex flex-row justify-between w-full">
-					<p class="text-gray-600 text-md font-bold">🌈 Color Wheel</p>
+					<p class="text-muted text-md font-bold">🌈 Color Wheel</p>
 					<div class="flex flex-row items-center justify-center gap-2">
 						<img src={coinGif} class="w-4 h-4" alt="coins" />
 						<span class="text-md font-bold">75</span>
 					</div>
 				</div>
 
-				<p class="text-gray-600 opacity-50 text-xs">
+				<p class="text-muted opacity-70 text-xs">
 					Permanently get access to a full color wheel when drawing.
 				</p>
 

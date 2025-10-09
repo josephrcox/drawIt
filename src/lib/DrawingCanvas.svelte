@@ -260,7 +260,7 @@
 
 	<canvas
 		bind:this={canvas}
-		class="border-2 border-gray-300 rounded-lg touch-none w-full aspect-square"
+		class="border-2 border-base-200 rounded-lg touch-none w-full aspect-square"
 		on:mousedown={startDrawing}
 		on:mousemove={draw}
 		on:mouseup={stopDrawing}

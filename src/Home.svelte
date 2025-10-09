@@ -335,7 +335,7 @@
 <style>
 	/* Add any custom styles here if needed */
 	.animate-gradient-text {
-		background: linear-gradient(to right, #c7b6f7, #f7e6ff, #c7b6f7);
+		background: linear-gradient(to right, #f59e0b, #fde68a, #f59e0b);
 		background-size: 200% auto;
 		-webkit-background-clip: text;
 		background-clip: text;

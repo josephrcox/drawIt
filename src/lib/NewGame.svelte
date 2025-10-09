@@ -72,7 +72,7 @@
 		/>
 		{#if userSearchQuery}
 			<button
-				class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black p-2"
+				class="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted hover:text-primary p-2"
 				on:click={() => {
 					userSearchQuery = '';
 					searchUsers();

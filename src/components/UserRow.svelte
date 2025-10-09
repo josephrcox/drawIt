@@ -8,7 +8,7 @@
 </script>
 
 <button
-	class="flex items-center justify-between w-full p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:border-primary/20 transition-colors active:bg-gray-50"
+	class="flex items-center justify-between w-full p-4 bg-white rounded-xl shadow-sm border border-base-200 hover:border-primary/20 transition-colors active:bg-base-200"
 	class:cursor-pointer={onClick !== null}
 	class:cursor-default={onClick === null}
 	on:click={() => onClick?.()}
@@ -38,7 +38,7 @@
 	{#if onClick}
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
-			class="h-5 w-5 text-gray-400"
+			class="h-5 w-5 text-muted"
 			viewBox="0 0 20 20"
 			fill="currentColor"
 		>

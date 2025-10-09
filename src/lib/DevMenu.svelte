@@ -136,7 +136,7 @@
 
 {#if isOpen}
 	<div class="fixed top-0 right-0 p-4 z-50 h-screen overflow-y-auto">
-		<div class="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
+		<div class="bg-white rounded-lg shadow-lg p-4 border border-base-200">
 			<h2 class="text-lg font-bold mb-4">Dev Menu</h2>
 			<div class="flex flex-col gap-2">
 				<button class="btn btn-error" on:click={deleteAllUsers}>

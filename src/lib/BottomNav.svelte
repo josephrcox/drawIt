@@ -26,7 +26,7 @@
 
 {#if !$isDrawing}
 	<nav
-		class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-50"
+		class="fixed bottom-0 left-0 right-0 bg-white border-t border-base-200 px-4 py-2 z-50"
 	>
 		<div class="flex justify-around items-center max-w-md mx-auto">
 			<!-- coins -->
@@ -38,7 +38,7 @@
 					<img src={coinGif} class="w-3 h-3" alt="coins" />
 					<span class="text-xs font-medium">{$currentUser?.coins || 0}</span>
 				</div>
-				<span class="text-xs text-gray-500">Store</span>
+				<span class="text-xs text-muted">Store</span>
 			</button>
 
 			{#if $currentGame}
@@ -76,7 +76,7 @@
 						xmlns="http://www.w3.org/2000/svg"
 						class="h-6 w-6 {currentPage === 'home'
 							? 'text-primary'
-							: 'text-gray-400'}"
+							: 'text-muted'}"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -91,7 +91,7 @@
 					<span
 						class="text-xs {currentPage === 'home'
 							? 'text-primary'
-							: 'text-gray-500'}">Home</span
+							: 'text-muted'}">Home</span
 					>
 				</button>
 
@@ -104,7 +104,7 @@
 						xmlns="http://www.w3.org/2000/svg"
 						class="h-6 w-6 {currentPage === 'new'
 							? 'text-primary'
-							: 'text-gray-400'}"
+							: 'text-muted'}"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -119,7 +119,7 @@
 					<span
 						class="text-xs {currentPage === 'new'
 							? 'text-primary'
-							: 'text-gray-500'}">New</span
+							: 'text-muted'}">New</span
 					>
 				</button>
 
@@ -132,7 +132,7 @@
 						xmlns="http://www.w3.org/2000/svg"
 						class="h-6 w-6 {currentPage === 'feed'
 							? 'text-primary'
-							: 'text-gray-400'}"
+							: 'text-muted'}"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -147,7 +147,7 @@
 					<span
 						class="text-xs {currentPage === 'feed'
 							? 'text-primary'
-							: 'text-gray-500'}">Feed</span
+							: 'text-muted'}">Feed</span
 					>
 				</button>
 			{/if}
