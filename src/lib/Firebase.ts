@@ -1286,3 +1286,29 @@ export async function backfillLikesCount(): Promise<void> {
 		console.error('Error backfilling likesCount:', error);
 	}
 }
+
+/**
+ * Get all drawings from the drawings collection
+ * Returns all drawings sorted by creation date (descending)
+ */
+export async function getAllDrawings(): Promise<Drawing[]> {
+	try {
+		const drawingsQuery = query(
+			drawingCollection,
+			orderBy('createdAt', 'desc'),
+		);
+
+		const drawingsSnapshot = await getDocs(drawingsQuery);
+
+		const allDrawings: Drawing[] = drawingsSnapshot.docs.map((doc) => {
+			const drawing = doc.data() as Drawing;
+			return { ...drawing, id: doc.id };
+		});
+
+		console.log('Fetched all drawings:', allDrawings.length);
+		return allDrawings;
+	} catch (error) {
+		console.error('Error fetching all drawings:', error);
+		return [];
+	}
+}

@@ -544,6 +544,12 @@
 			loading = false;
 		}
 	}
+
+	function listWords() {
+		for (const drawing of drawings) {
+			console.log(drawing.secretWord);
+		}
+	}
 </script>
 
 <div class="p-4">

@@ -15,12 +15,12 @@
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-<div class="flex items-center flex-row w-48 mx-auto mb-6 gap-4">
+<div class="flex items-center flex-row w-56 mx-auto my-6 gap-4">
 	<img
 		src={logoUrl}
 		alt="drawIt"
-		class="w-full drop-shadow-md cursor-pointer"
+		class="w-full drop-shadow-md cursor-pointer mt-6"
 		on:click={handleClick}
 	/>
-	<img src={leafPng} alt="leaf" class="w-10 h-10" />
+	<img src={leafPng} alt="leaf" class="w-10 h-10 mt-6" />
 </div>

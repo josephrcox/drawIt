@@ -157,6 +157,8 @@
 			</button>
 		{/if}
 
-		<DevMenu />
+		{#if window.location.search.includes('?dev=true')}
+			<DevMenu />
+		{/if}
 	</main>
 {/if}
