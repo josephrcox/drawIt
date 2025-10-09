@@ -146,16 +146,16 @@
 			return;
 		}
 
-		const usedWords = new Set(allDrawings.map(drawing => drawing.secretWord));
+		const usedWords = new Set(allDrawings.map((drawing) => drawing.secretWord));
 		const usedWordsArray = Array.from(usedWords);
-		
+
 		if (usedWordsArray.length === 0) {
 			alert('No words found to remove.');
 			return;
 		}
 
 		const confirmMessage = `Are you sure you want to permanently remove ${usedWordsArray.length} used words from words.js?\n\nThis will remove:\n${usedWordsArray.slice(0, 10).join(', ')}${usedWordsArray.length > 10 ? `\n... and ${usedWordsArray.length - 10} more words` : ''}\n\nThis action cannot be undone!`;
-		
+
 		if (!confirm(confirmMessage)) {
 			return;
 		}
@@ -164,25 +164,29 @@
 			// Read the current words.js file
 			const response = await fetch('/src/lib/words.js');
 			const wordsContent = await response.text();
-			
+
 			// Parse the words array from the file
-			const wordsMatch = wordsContent.match(/export let words = \[([\s\S]*?)\];/);
+			const wordsMatch = wordsContent.match(
+				/export let words = \[([\s\S]*?)\];/,
+			);
 			if (!wordsMatch) {
 				throw new Error('Could not parse words array from words.js');
 			}
-			
+
 			const wordsString = wordsMatch[1];
 			const currentWords = wordsString
 				.split(',')
-				.map(word => word.trim().replace(/['"]/g, ''))
-				.filter(word => word.length > 0);
-			
+				.map((word) => word.trim().replace(/['"]/g, ''))
+				.filter((word) => word.length > 0);
+
 			// Remove used words
-			const remainingWords = currentWords.filter(word => !usedWords.has(word));
-			
+			const remainingWords = currentWords.filter(
+				(word) => !usedWords.has(word),
+			);
+
 			// Create new words.js content
-			const newWordsContent = `export let words = [\n${remainingWords.map(word => `\t'${word}',`).join('\n')}\n];\n`;
-			
+			const newWordsContent = `export let words = [\n${remainingWords.map((word) => `\t'${word}',`).join('\n')}\n];\n`;
+
 			// Create a downloadable file
 			const blob = new Blob([newWordsContent], { type: 'text/javascript' });
 			const url = URL.createObjectURL(blob);
@@ -193,19 +197,22 @@
 			link.click();
 			document.body.removeChild(link);
 			URL.revokeObjectURL(url);
-			
+
 			// Also copy to clipboard for easy pasting
 			try {
 				await navigator.clipboard.writeText(newWordsContent);
-				alert(`Successfully generated new words.js file!\n\nRemoved ${usedWordsArray.length} used words.\nRemaining: ${remainingWords.length} words.\n\nFile downloaded and content copied to clipboard.`);
+				alert(
+					`Successfully generated new words.js file!\n\nRemoved ${usedWordsArray.length} used words.\nRemaining: ${remainingWords.length} words.\n\nFile downloaded and content copied to clipboard.`,
+				);
 			} catch (clipboardError) {
-				alert(`Successfully generated new words.js file!\n\nRemoved ${usedWordsArray.length} used words.\nRemaining: ${remainingWords.length} words.\n\nFile downloaded. (Clipboard copy failed - check console)`);
+				alert(
+					`Successfully generated new words.js file!\n\nRemoved ${usedWordsArray.length} used words.\nRemaining: ${remainingWords.length} words.\n\nFile downloaded. (Clipboard copy failed - check console)`,
+				);
 				console.warn('Clipboard copy failed:', clipboardError);
 			}
-			
+
 			console.log('Words that were removed:', usedWordsArray);
 			console.log('Remaining words count:', remainingWords.length);
-			
 		} catch (error) {
 			console.error('Error processing words removal:', error);
 			alert('Error processing words removal. Check console for details.');
@@ -367,7 +374,7 @@
 							</tbody>
 						</table>
 					</div>
-					
+
 					<!-- Words to be removed preview -->
 					<div class="mt-4 p-3 bg-warning/10 rounded-lg">
 						<h4 class="text-sm font-semibold mb-2 text-warning">
@@ -375,7 +382,9 @@
 						</h4>
 						<div class="text-xs text-gray-600 max-h-32 overflow-y-auto">
 							{#each sortedWordCounts as [word, count], i}
-								<span class="inline-block mr-2 mb-1 px-2 py-1 bg-warning/20 rounded text-warning font-mono">
+								<span
+									class="inline-block mr-2 mb-1 px-2 py-1 bg-warning/20 rounded text-warning font-mono"
+								>
 									{word}
 								</span>
 							{/each}
