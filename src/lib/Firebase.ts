@@ -171,8 +171,10 @@ export async function addNotification(
 				if (
 					!currentNotifications.some((n: any) => n.id === newNotification.id)
 				) {
+					const userAuthentication = get(currentUser);
 					await updateDoc(userRef, {
 						notifications: arrayUnion(newNotification),
+						userAuthenticationKey: userAuthentication?.id,
 					});
 				}
 			}
@@ -200,7 +202,12 @@ export async function addComment(
 		const newComment = { content: comment, createdBy: username };
 		const updatedComments = [...(ddata.comments || []), newComment];
 
-		await updateDoc(ddoc.ref, { comments: updatedComments });
+		const userAuthentication = get(currentUser);
+
+		await updateDoc(ddoc.ref, {
+			comments: updatedComments,
+			userAuthenticationKey: userAuthentication?.id,
+		});
 
 		// Use the acting user's ID for the notification
 		await addNotification(
@@ -471,8 +478,12 @@ export async function updateGame(game: Game) {
 		}
 		// Add any other game-specific, non-drawing fields here if necessary
 
+		const userAuthentication = get(currentUser);
 		if (Object.keys(gameDataToUpdate).length > 0) {
-			await updateDoc(gameRef, gameDataToUpdate);
+			await updateDoc(gameRef, {
+				...gameDataToUpdate,
+				userAuthenticationKey: userAuthentication?.id,
+			});
 		}
 		return game; // Return the game object passed in, potentially with local modifications
 	} catch (error) {
@@ -491,10 +502,12 @@ export async function updateUser(user: User) {
 	}
 
 	const userRef = doc(userCollection, user.id);
+	const userAuthentication = get(currentUser);
 	await updateDoc(userRef, {
 		name: user.name,
 		coins: user.coins,
 		createdAt: user.createdAt,
+		userAuthenticationKey: userAuthentication?.id,
 	});
 
 	// No need to update the store here, the reactive subscription will handle it
@@ -511,9 +524,11 @@ export async function addcoins(username: string, coins: number) {
 	try {
 		const userRef = doc(userCollection, user.id);
 		const updatedcoins = user.coins + coins;
+		const userAuthentication = get(currentUser);
 
 		await updateDoc(userRef, {
 			coins: updatedcoins,
+			userAuthenticationKey: userAuthentication?.id,
 		});
 
 		const updatedUser = { ...user, coins: updatedcoins };
@@ -589,9 +604,12 @@ export async function likeDrawing(
 
 		console.log(`Updated likes:`, updatedLikes);
 
+		const userAuthentication = await getUser(userName);
+
 		await updateDoc(drawingRef, {
 			likes: updatedLikes,
 			likesCount: updatedLikes.length,
+			userAuthenticationKey: userAuthentication?.id,
 		});
 
 		console.log(`Like operation successful for drawing ${drawingDoc.id}`);
@@ -756,7 +774,16 @@ export async function getRecentDrawings(
 export async function setDocWithMiddleware(ref: any, data: any, options?: any) {
 	// Remove any existing middleware field to prevent using old data
 	const { _middleware, ...cleanData } = data;
-	return setDoc(ref, cleanData, options);
+
+	const userAuthentication = get(currentUser);
+	return setDoc(
+		ref,
+		{
+			...cleanData,
+			newUser: true,
+		},
+		options,
+	);
 }
 
 /**
@@ -818,9 +845,12 @@ export async function checkDailyReward(user: User): Promise<boolean> {
 		const rewardCoins = Math.floor(Math.random() * 10) + 3;
 		const userRef = doc(userCollection, user.id);
 
+		const userAuthentication = get(currentUser);
+
 		await updateDoc(userRef, {
 			coins: user.coins + rewardCoins,
 			dailyRewards: arrayUnion(today),
+			userAuthenticationKey: userAuthentication?.id,
 		});
 
 		const updatedUser = {
@@ -861,9 +891,11 @@ export async function purchaseUpgrade(
 		}
 
 		const userRef = doc(userCollection, user.id);
+		const userAuthentication = get(currentUser);
 		await updateDoc(userRef, {
 			upgrades: arrayUnion(upgrade),
 			coins: user.coins - coins,
+			userAuthenticationKey: userAuthentication?.id,
 		});
 
 		// Fetch the latest user from the DB and normalize
@@ -1005,7 +1037,11 @@ export async function updateDrawing(
 		console.log('Updating drawing with ID:', drawingId);
 		console.log('Updates being applied:', updates);
 		const drawingRef = doc(drawingCollection, drawingId);
-		await updateDoc(drawingRef, updates);
+		const userAuthentication = get(currentUser);
+		await updateDoc(drawingRef, {
+			...updates,
+			userAuthenticationKey: userAuthentication?.id,
+		});
 		console.log('Successfully updated drawing:', drawingId);
 		return true;
 	} catch (error) {
@@ -1058,7 +1094,11 @@ export async function createNewDrawing(
 			if (gameDoc.exists()) {
 				const game = gameDoc.data() as Game;
 				const currentCount = game.drawingsCount || 0;
-				await updateDoc(gameRef, { drawingsCount: currentCount + 1 });
+				const userAuthentication = get(currentUser);
+				await updateDoc(gameRef, {
+					drawingsCount: currentCount + 1,
+					userAuthenticationKey: userAuthentication?.id,
+				});
 
 				// Update local allGames store if game is present
 				allGames.update((ags) => {
@@ -1108,7 +1148,11 @@ export async function markNotificationRead(
 	const updatedNotifications = notifications.map((n: any) =>
 		n.id === notificationId ? { ...n, read: true } : n,
 	);
-	await updateDoc(userRef, { notifications: updatedNotifications });
+	const userAuthentication = get(currentUser);
+	await updateDoc(userRef, {
+		notifications: updatedNotifications,
+		userAuthenticationKey: userAuthentication?.id,
+	});
 }
 
 /**
@@ -1128,7 +1172,11 @@ export async function lowercaseAllUserNames(): Promise<void> {
 			const lowercaseName = originalName.toLowerCase();
 
 			if (originalName !== lowercaseName) {
-				batch.update(doc(userCollection, userDoc.id), { name: lowercaseName });
+				const userAuthentication = get(currentUser);
+				batch.update(doc(userCollection, userDoc.id), {
+					name: lowercaseName,
+					userAuthenticationKey: userAuthentication?.id,
+				});
 				updateCount++;
 			}
 		}
@@ -1150,7 +1198,9 @@ export async function lowercaseAllUserNames(): Promise<void> {
 			const lowercaseUsers = originalUsers.map((name) => name.toLowerCase());
 
 			if (JSON.stringify(originalUsers) !== JSON.stringify(lowercaseUsers)) {
+				const userAuthentication = get(currentUser);
 				gameBatch.update(doc(gameCollection, gameDoc.id), {
+					userAuthenticationKey: userAuthentication?.id,
 					users: lowercaseUsers,
 				});
 				gameUpdateCount++;
@@ -1272,7 +1322,12 @@ export async function backfillLikesCount(): Promise<void> {
 			}
 			const likesCount = likes.length;
 			if (artist) {
-				await updateDoc(docSnap.ref, { likes, likesCount });
+				const userAuthentication = get(currentUser);
+				await updateDoc(docSnap.ref, {
+					likes,
+					likesCount,
+					userAuthenticationKey: userAuthentication?.id,
+				});
 			} else {
 				console.warn(
 					`Skipped drawing ${docSnap.id}: missing or invalid artist`,
