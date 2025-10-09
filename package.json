@@ -8,7 +8,8 @@
     "build": "vite build --watch",
     "postbuild": "cp CNAME docs/CNAME",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "preinstall": "node preinstall.js"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.0.2",

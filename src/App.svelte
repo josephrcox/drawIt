@@ -62,7 +62,7 @@
 		});
 
 		const elapsed = Date.now() - splashStart;
-		const remaining = 2000 - elapsed;
+		const remaining = 1500 - elapsed;
 		if (remaining > 0) {
 			await new Promise((resolve) => setTimeout(resolve, remaining));
 		}
